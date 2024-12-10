@@ -1,0 +1,9 @@
+*.pack2
+/*.manifest
+/*.txt
+/extracted/
+/target/
+/ultimate_namelist*
+Cargo.lock
+
+!/LICENSE.txt

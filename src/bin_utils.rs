@@ -1,0 +1,61 @@
+use std::io::Read;
+use std::io::Result;
+
+pub fn read_u32_le(br: &mut dyn Read) -> Result<u32> {
+    let mut buf: [u8; 4] = [0; 4];
+    br.read_exact(&mut buf)?;
+    Ok(u32::from_le_bytes(buf))
+}
+
+pub fn read_u64_le(br: &mut dyn Read) -> Result<u64> {
+    let mut buf: [u8; 8] = [0; 8];
+    br.read_exact(&mut buf)?;
+    Ok(u64::from_le_bytes(buf))
+}
+
+pub fn read_u32_be(br: &mut dyn Read) -> Result<u32> {
+    let mut buf: [u8; 4] = [0; 4];
+    br.read_exact(&mut buf)?;
+    Ok(u32::from_be_bytes(buf))
+}
+
+pub fn read_u64_be(br: &mut dyn Read) -> Result<u64> {
+    let mut buf: [u8; 8] = [0; 8];
+    br.read_exact(&mut buf)?;
+    Ok(u64::from_be_bytes(buf))
+}
+
+pub fn read_u16_le(br: &mut dyn Read) -> Result<u16> {
+    let mut buf: [u8; 2] = [0; 2];
+    br.read_exact(&mut buf)?;
+    Ok(u16::from_le_bytes(buf))
+}
+
+pub fn read_u16_be(br: &mut dyn Read) -> Result<u16> {
+    let mut buf: [u8; 2] = [0; 2];
+    br.read_exact(&mut buf)?;
+    Ok(u16::from_be_bytes(buf))
+}
+
+pub fn read_f32_be(br: &mut dyn Read) -> Result<f32> {
+    let mut buf: [u8; 4] = [0; 4];
+    br.read_exact(&mut buf)?;
+    Ok(f32::from_be_bytes(buf))
+}
+
+/// equivalent ot c# BinaryReader.ReadSingle
+pub fn read_f32_le(br: &mut dyn Read) -> Result<f32> {
+    let mut buf: [u8; 4] = [0; 4];
+    br.read_exact(&mut buf)?;
+    Ok(f32::from_le_bytes(buf))
+}
+
+pub fn read_x_bytes(br: &mut dyn Read, byte_count: usize) -> Result<Vec<u8>> {
+    let mut out: Vec<u8> = Vec::with_capacity(byte_count);
+    let mut buffer: [u8; 1] = [0u8];
+    for _ in 1..=byte_count {
+        br.read_exact(&mut buffer)?;
+        out.push(buffer[0]);
+    }
+    Ok(out)
+}

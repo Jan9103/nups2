@@ -1,0 +1,47 @@
+#!/usr/bin/env nu
+
+def main [
+  --planetside-directory: path = "~/.var/app/com.valvesoftware.Steam/.steam/steam/steamapps/common/PlanetSide 2"
+  --nups2-bin: path = "./target/release/nups2"
+  --final-file: path = "./ultimate_namelist.txt"
+  --scrape-mode: int = 3
+] {
+  let final_file = ($final_file | path expand)
+  if ($final_file | path exists) {
+    error make {msg: $"final file already exists ($final_file)"}
+  }
+  mkdir ($final_file | path dirname)
+
+  let nups2_bin = ($nups2_bin | path expand)
+
+  cd $planetside_directory
+  let pack_files: list<string> = (ls **/*.pack2 | each {|file| $file.name | path expand})
+
+  let tmpdir = (mktemp --directory)
+  cd $tmpdir
+  let thread_count: int = (([5, (sys cpu | length)] | math max) - 4)
+  $pack_files
+  | par-each --threads $thread_count {|pack_file|
+    print $"Scraping ($pack_file | path basename).."
+    ^$nups2_bin "pack2-scrape-filenames" $pack_file $'($pack_file | path basename).namelist.txt' --scrape-mode $scrape_mode
+    null
+  }
+
+  print "Combinding scraped namelists into one.."
+  ls
+  | each {|file| open --raw $file.name | lines}
+  | flatten
+  | append (scrape_ui_xml $planetside_directory)
+  | uniq
+  | str join "\n"
+  | save --raw $final_file
+
+  cd  # deleting the dir were in can be bad
+  rm --permanent --recursive $tmpdir
+}
+
+def scrape_ui_xml [ps2_dir: path]: nothing -> list<string> {
+  cd ($ps2_dir | path join 'UI' 'UiModules' 'Main')
+  ^rg -Io '[a-zA-Z0-9_-]+\.swf'
+  | lines
+}
