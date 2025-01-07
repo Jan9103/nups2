@@ -1,9 +1,30 @@
 # nups2
 
-a decoder library with small cli for planetside2 files (mainly `pack2` for now).
+A decoder for planetside2 files (mainly `pack2` for now):
+* As a crablang library (`crates/nups2`)
+* As a basic cli (`crates/nups2`)
+* As a nushell plugin (`crates/nushell_plugin_nups2`)
 
+## Features
 
-## features
+### `nu_plugin_nups2`
+
+* `pack2`:
+  * list contents
+  * extract files
+  * scrape filenames
+* `hash ps2crc64`
+
+### `nups2` (cli)
+
+* `pack2`:
+  * list contents
+    * human formatting
+    * json
+  * extract files
+  * scrape filenames
+
+### `nups2` (library)
 
 * `pack2` files
   * read filelist
@@ -19,13 +40,12 @@ a decoder library with small cli for planetside2 files (mainly `pack2` for now).
   * convert to json
 * `dme` (v4) files
   * read (note: larger than RAM files are not yet supported)
-* cli interface
-  * most `pack2` features
 
 
 ## usage
 
-For most things just run `nups2 --help` and then `nups2 <subcommand> --help`. it should be pretty self-explanatory.
+* **Nu plugin:** [crates/nu_plugin_nups2/README.md](crates/nu_plugin_nups2/README.md)
+* **CLI:** For most things just run `nups2 --help` and then `nups2 <subcommand> --help`. it should be pretty self-explanatory.
 
 ### getting proper filenames
 
@@ -45,14 +65,18 @@ It is not complete (`Sanctuary_x64_0.pack2` is still basically untranslated, etc
 Be ready to wait for an hour!
 
 ```bash
-# build a index from 1 file
+# (cli) build a index from 1 file
 nups2 pack2-scrape-filenames data_x64_0.pack2 namelist.txt
+# (nu_plugin) build a index from 1 file
+pack2 scrape_filenames data_x64_0.pack2 namelist.txt
 
-# build a index from all files
+# (cli) build a index from all files
 nu ./scrape_all_for_namelist.nu
 
-# use a index
+# (cli) use a index
 nups2 pack2-ls --filename-list-file namelist.txt VR_x64_0.pack2
+# (nu_plugin) use a index
+pack2 ls --filename_list_file namelist.txt VR_x64_0.pack2
 ```
 
 The scraper has multiple modes (`--scrape-mode`) (3 is recommended):
@@ -99,7 +123,11 @@ The password-cracking tool [hashcat][] can be used to crack the filenames.
 But this is extremely time-consuming.
 
 ```bash
+# (cli)
 nups2 pack2-ls --json ./example.pack2 | jq ".[].name_hash" > hashes.txt
+# (nu_plugin)
+pack2 ls ./example.pack2 | get name_hash | str join "\n" | save hashes.txt
+
 hashcat -m 28000 hashes.txt
 ```
 
