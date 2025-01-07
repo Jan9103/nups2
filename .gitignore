@@ -2,7 +2,7 @@
 /*.manifest
 /*.txt
 /extracted/
-/target/
+/crates/*/target/
 /ultimate_namelist*
 Cargo.lock
 

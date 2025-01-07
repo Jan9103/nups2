@@ -1,5 +1,6 @@
 use crate::pack2::Pack2;
 use regex::Regex;
+use std::collections::HashSet;
 use std::{fs::File, io::Result};
 
 const INTERRESTING_BYTES: &[u8] = &[
@@ -39,6 +40,7 @@ pub fn extract_names(
     search_mode: usize,
     limit_to_files: Option<Vec<u64>>,
 ) -> Result<Vec<String>> {
+    // TODO: it misses most / all .fsb files
     let filename_regex: Regex = Regex::new(FILENAME_REGEX_STRINGS[search_mode])
         .expect("Failed to compile filename_extractor filename_regex");
 
@@ -71,36 +73,52 @@ pub fn extract_names(
             if text.len() < 5 || !text.contains(".") {
                 continue 'text_loop;
             }
-            'regex_loop: for result in filename_regex.find_iter(text.as_str()) {
-                let mut s: &str = result.as_str();
-                if let Some(t) = s.strip_prefix(">") {
-                    s = t;
-                }
-                if s.contains("<gender>") {
-                    output.push(s.replace("<gender>", "Female"));
-                    output.push(s.replace("<gender>", "Male"));
-                    continue 'regex_loop;
-                }
-                if let Some(tds) = s.strip_suffix(".efb") {
-                    output.push(String::from(s));
-                    output.push(format!("{}.dx11efb", tds));
-                    continue 'regex_loop;
-                }
-                if let Some(tds) = s.strip_suffix(".nsa") {
-                    output.push(String::from(s));
-                    if let Some((name, hash)) = tds.rsplit_once("_") {
-                        output.push(format!("{}.nsa", name));
-                        let l = name.len();
-                        if (l % 2) == 1 {
-                            let sn = name.split_at(l / 2).0;
-                            output.push(format!("{}.nsa", &sn));
-                            output.push(format!("{}_{}.nsa", &sn, &hash));
+            output.append(
+                &mut filename_regex
+                    .find_iter(text.as_str())
+                    .map(|i| -> String {
+                        let s: &str = i.as_str();
+                        String::from(s.strip_prefix(">").unwrap_or(s))
+                    })
+                    .flat_map(|s| {
+                        if s.contains("<gender>") {
+                            vec![
+                                s.replace("<gender>", "Female"),
+                                s.replace("<gender>", "Male"),
+                            ]
+                        } else {
+                            vec![s]
                         }
-                    }
-                    continue 'regex_loop;
-                }
-                output.push(String::from(s));
-            }
+                    })
+                    .flat_map(|s| match s.to_lowercase().split(".").last() {
+                        Some("efb") => vec![format!("{}dx11efb", s.split_at(s.len() - 3).0), s],
+                        Some("nsa") => {
+                            let tds = s.split_at(s.len() - 3).0;
+                            let mut t: Vec<String> = Vec::new();
+                            t.push(s.clone());
+                            if let Some((name, hash)) = tds.rsplit_once("_") {
+                                t.push(format!("{}.nsa", name));
+                                let l = name.len();
+                                if (l % 2) == 1 {
+                                    let sn = name.split_at(l / 2).0;
+                                    t.push(format!("{}.nsa", &sn));
+                                    t.push(format!("{}_{}.nsa", &sn, &hash));
+                                }
+                            }
+                            t
+                        }
+                        Some("dma") => {
+                            if let Some(a) = s.strip_suffix("_Lod0.dma") {
+                                vec![format!("{a}.adr"), s]
+                            } else {
+                                vec![s]
+                            }
+                        }
+                        Some("cdt") => vec![format!("{}adr", s.split_at(s.len() - 3).0), s],
+                        _ => vec![s],
+                    })
+                    .collect::<Vec<String>>(),
+            );
         }
     }
 
@@ -111,7 +129,11 @@ pub fn extract_names(
         output.retain(|i| !float_regex.is_match(&i.as_str()));
     }
 
-    Ok(output)
+    Ok(output
+        .into_iter()
+        .collect::<HashSet<String>>()
+        .into_iter()
+        .collect::<Vec<String>>())
 }
 
 /// find text patches in binary data (code contains strings, 3d-models have metadata, etc)
