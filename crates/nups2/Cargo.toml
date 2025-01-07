@@ -11,7 +11,7 @@ codegen-units = 1
 opt-level = 3
 
 [features]
-default = ["json", "use_comfy_table", "filename_scraper", "manifests"]
+default = ["json", "use_comfy_table", "filename_scraper", "manifests", "cli"]
 all = ["default", "rainbow_table", "dma", "dme", "adr"]
 debug_logs = []
 adr = ["quick-xml", "serde/derive"]  # This was a mistake. also not finished
@@ -22,9 +22,10 @@ json = []
 manifests = []
 rainbow_table = ["regex", "rayon"]
 use_comfy_table = ["comfy-table"]
+cli = ["clap"]
 
 [dependencies]
-clap = {version = "4.5.23", default-features = false, features = ["std", "env", "derive", "help", "usage"]}
+clap = {version = "4.5.23", default-features = false, features = ["std", "env", "derive", "help", "usage"], optional = true}
 comfy-table = {version = "7.1.3", default-features = false, optional = true}
 flate2 = {version = "1.0.35", default-features = false, features = ["zlib"]}
 quick-xml = {version = "0.37.1", default-features = false, features = ["serde-types"], optional = true}
