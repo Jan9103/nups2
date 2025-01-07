@@ -29,10 +29,10 @@ fn cli() -> std::io::Result<()> {
     // dbg!(nups2::dma::Dma::read(&mut File::open(
     //     "extracted/assets_x64_0/Weapon_NC_PistolMag_Lod2.dma"
     // )?)?);
-    nups2::dme::Dme::read(&mut File::open(
-        "extracted/assets_x64_0/Amerish_Props_Rock_HighlandFormation04_Lod0.dme", // "extracted/assets_x64_0/Indar_Flora_Shrub_OceanGreen03_Lod0_LODAuto.dme"
-    )?)?;
-    return Ok(());
+    // nups2::dme::Dme::read(&mut File::open(
+    //     "extracted/assets_x64_0/Amerish_Props_Rock_HighlandFormation04_Lod0.dme", // "extracted/assets_x64_0/Indar_Flora_Shrub_OceanGreen03_Lod0_LODAuto.dme"
+    // )?)?;
+    // return Ok(());
 
     let args = Args::parse();
     match args.cmd {
