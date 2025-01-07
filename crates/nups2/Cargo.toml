@@ -11,17 +11,17 @@ codegen-units = 1
 opt-level = 3
 
 [features]
-default = ["json", "use_comfy_table", "filename_scraper", "manifests", "dma", "dme"] # TODO: move adr, dma, etc to all
-all = ["default", "rainbow_table"]
-json = []
-use_comfy_table = ["comfy-table"]
-rainbow_table = ["regex", "rayon"]
-filename_scraper = ["regex"]
-manifests = []
+default = ["json", "use_comfy_table", "filename_scraper", "manifests"]
+all = ["default", "rainbow_table", "dma", "dme", "adr"]
+debug_logs = []
+adr = ["quick-xml", "serde/derive"]  # This was a mistake. also not finished
 dma = []
 dme = ["dma"]
-adr = ["quick-xml", "serde/derive"]  # This was a mistake. also not finished
-debug_logs = []
+filename_scraper = ["regex"]
+json = []
+manifests = []
+rainbow_table = ["regex", "rayon"]
+use_comfy_table = ["comfy-table"]
 
 [dependencies]
 clap = {version = "4.5.23", default-features = false, features = ["std", "env", "derive", "help", "usage"]}

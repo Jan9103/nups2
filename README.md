@@ -3,11 +3,17 @@
 A decoder for planetside2 files (mainly `pack2` for now):
 * As a crablang library (`crates/nups2`)
 * As a basic cli (`crates/nups2`)
-* As a nushell plugin (`crates/nushell_plugin_nups2`)
+* As a [nushell][] plugin (`crates/nushell_plugin_nups2`)
+
+**NOTE:** If you just want to explore some files you can get pre-extracted ones on the discord
+and would probably have a better time with [ps2ls2][].
+
+Currently the only upsides compared to `ps2ls2` are probably that this is not a GUI and that the
+filename-scraper finds diffrent results.
 
 ## Features
 
-### `nu_plugin_nups2`
+### `nu_plugin_nups2` (nushell plugin)
 
 * `pack2`:
   * list contents
@@ -156,18 +162,24 @@ I used some external libraries in this implementation:
 * [flate2][] for zlib decompression.
 * [rayon][] for multithreading (only for [rainbow-table][] features so far).
 * [regex][] as regex engine.
+* [quick-xml][] and [serde][] for `.adr` files.
+* [nushell][]
 
 
 
-[forgelight-toolbox]: https://github.com/RhettVX/forgelight-toolbox
-[hashcat]: https://hashcat.net
-[psemu]: https://github.com/psemu
 [NatCracken]: https://github.com/NatCracken
 [RhettVX]: https://github.com/RhettVX
-[ryanjsims]: https://github.com/ryanjsims
-[rainbow-table]: https://en.wikipedia.org/wiki/Rainbow_table
 [clap]: https://crates.io/crates/clap
 [comfy-table]: https://crates.io/crates/comfy-table
 [flate2]: https://crates.io/crates/flate2
+[forgelight-toolbox]: https://github.com/RhettVX/forgelight-toolbox
+[hashcat]: https://hashcat.net
+[nushell]: https://nushell.sh
+[ps2ls2]: https://github.com/NatCracken/ps2ls2
+[psemu]: https://github.com/psemu
+[quick-xml]: https://crates.io/crates/quick-xml
+[rainbow-table]: https://en.wikipedia.org/wiki/Rainbow_table
 [rayon]: https://crates.io/crates/rayon
 [regex]: https://crates.io/crates/regex
+[ryanjsims]: https://github.com/ryanjsims
+[serde]: https://crates.io/crates/serde

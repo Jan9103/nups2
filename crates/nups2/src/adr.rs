@@ -3,6 +3,7 @@ use std::io::Read;
 
 use quick_xml::reader::Reader;
 
+#[deprecated(note = "Do not use (not finished)")]
 pub struct Adr {}
 
 impl Adr {
