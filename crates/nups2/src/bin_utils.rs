@@ -1,5 +1,6 @@
 use std::io::Read;
 use std::io::Result;
+use std::io::Write;
 
 pub fn read_u32_le(br: &mut dyn Read) -> Result<u32> {
     let mut buf: [u8; 4] = [0; 4];
@@ -58,4 +59,9 @@ pub fn read_x_bytes(br: &mut dyn Read, byte_count: usize) -> Result<Vec<u8>> {
         out.push(buffer[0]);
     }
     Ok(out)
+}
+
+pub fn write_u32_le(num: u32, bw: &mut dyn Write) -> Result<()> {
+    bw.write(&num.to_le_bytes())?;
+    Ok(())
 }

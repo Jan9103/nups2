@@ -17,3 +17,5 @@ pub mod pack2;
 pub mod pack2_manifest;
 #[cfg(feature = "rainbow_table")]
 pub mod rainbow_table;
+
+pub mod to_glb;

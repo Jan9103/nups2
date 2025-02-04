@@ -11,7 +11,7 @@ codegen-units = 1
 opt-level = 3
 
 [features]
-default = ["json", "use_comfy_table", "filename_scraper", "manifests", "cli"]
+default = ["json", "use_comfy_table", "filename_scraper", "manifests", "cli", "all"] # FIXME: remove "all" again
 all = ["default", "rainbow_table", "dma", "dme", "adr"]
 debug_logs = []
 adr = ["quick-xml", "serde/derive"]  # This was a mistake. also not finished
