@@ -2,7 +2,7 @@
 
 def main [
   --planetside-directory: path = "~/.var/app/com.valvesoftware.Steam/.steam/steam/steamapps/common/PlanetSide 2"
-  --nups2-bin: path = "./target/release/nups2"
+  --nups2-bin: path = "./crates/nups2/target/release/nups2"
   --final-file: path = "./ultimate_namelist.txt"
   --scrape-mode: int = 3
 ] {
