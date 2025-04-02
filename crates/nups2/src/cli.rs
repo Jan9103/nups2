@@ -93,10 +93,10 @@ pub fn cli() -> std::io::Result<()> {
                 pack2.apply_filename_list(&read_file_lines(&tmp)?);
             }
             if !exclude_named {
-                pack2.extract_all_named(&mut br, &output_dir.as_path())?;
+                pack2.extract_all_named(&mut br, output_dir.as_path())?;
             }
             if !exclude_unnamed {
-                pack2.extract_all_unnamed(&mut br, &output_dir.as_path())?;
+                pack2.extract_all_unnamed(&mut br, output_dir.as_path())?;
             }
         }
 
@@ -134,7 +134,7 @@ pub fn cli() -> std::io::Result<()> {
                 scrape_mode,
                 limit_to_files,
             )?;
-            output_file.write(filenames.join("\n").as_bytes())?;
+            output_file.write_all(filenames.join("\n").as_bytes())?;
         }
 
         #[cfg(feature = "manifests")]
@@ -174,6 +174,47 @@ pub fn cli() -> std::io::Result<()> {
                     &crate::crc64::filename_list_to_lookup_table(&filename_list),
                 )
             );
+        }
+
+        #[cfg(feature = "manifests")]
+        Commands::ManifestDiffWithAnother {
+            new_manifest_file,
+            old_manifest_file,
+            filename_list_file,
+        } => {
+            use crate::pack2_manifest::*;
+            let filename_list: Vec<String> = if let Some(fnlf) = filename_list_file {
+                read_file_lines(&fnlf)?
+            } else {
+                Vec::new()
+            };
+            let old_manifest: Manifest = read_manifest_file(old_manifest_file.as_path())?;
+            let new_manifest: Manifest = read_manifest_file(new_manifest_file.as_path())?;
+            let diff: ManifestDiff = diff_two_manifests(&old_manifest, &new_manifest);
+            println!(
+                "{}",
+                render_for_humans(
+                    &diff,
+                    &crate::crc64::filename_list_to_lookup_table(&filename_list),
+                )
+            )
+        }
+
+        #[cfg(feature = "pack1")]
+        Commands::Pack1Ls {
+            pack1_file,
+            #[cfg(feature = "json")]
+            json,
+        } => {
+            use crate::pack1::Pack1;
+            let mut br: File = File::open(pack1_file)?;
+            let pack1: Pack1 = Pack1::load_from_file(&mut br)?;
+            #[cfg(feature = "json")]
+            if json {
+                println!("{}", pack1.as_json());
+                return Ok(());
+            }
+            println!("{}", pack1.ls_for_humans());
         }
 
         #[cfg(feature = "rainbow_table")]
@@ -333,6 +374,26 @@ enum Commands {
 
         #[clap(long)]
         filename_list_file: Option<PathBuf>,
+    },
+
+    #[cfg(feature = "manifests")]
+    ManifestDiffWithAnother {
+        new_manifest_file: PathBuf,
+        old_manifest_file: PathBuf,
+
+        #[clap(long)]
+        filename_list_file: Option<PathBuf>,
+    },
+
+    #[cfg(feature = "pack1")]
+    Pack1Ls {
+        /// The pack2 file you want to inspect
+        pack1_file: PathBuf,
+
+        /// Output the data as json for further use by other programs
+        #[cfg(feature = "json")]
+        #[clap(long, action)]
+        json: bool,
     },
 
     #[cfg(feature = "rainbow_table")]

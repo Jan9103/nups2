@@ -40,6 +40,7 @@ Feature flag | Description
 `dma`        | `.dma` file support (materials) (mostly untested)
 `dme`        | `.dme` file support (meshes and bones) (mostly untested)
 `adr`        | `.adr` file support (actor definitions) (DOES NOT WORK)
+`pack1`      | `.pack` (`.pack2` predecessor) (only `ls`)
 
 
 ## Usage as library

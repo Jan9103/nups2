@@ -51,6 +51,7 @@ pub fn read_f32_le(br: &mut dyn Read) -> Result<f32> {
     Ok(f32::from_le_bytes(buf))
 }
 
+/// intended for reading a filename, etc - use read_big_x_bytes for entire files
 pub fn read_x_bytes(br: &mut dyn Read, byte_count: usize) -> Result<Vec<u8>> {
     let mut out: Vec<u8> = Vec::with_capacity(byte_count);
     let mut buffer: [u8; 1] = [0u8];
@@ -61,7 +62,25 @@ pub fn read_x_bytes(br: &mut dyn Read, byte_count: usize) -> Result<Vec<u8>> {
     Ok(out)
 }
 
+/// read_x_bytes, but optimized for bigger things, such as 3d-models
+pub fn read_big_x_bytes(br: &mut dyn Read, byte_count: usize) -> Result<Vec<u8>> {
+    let mut out: Vec<u8> = Vec::with_capacity(byte_count);
+
+    let mut buf: [u8; 1024] = [0; 1024];
+    for _ in 1..=(byte_count >> 10) {
+        br.read_exact(&mut buf)?;
+        out.write_all(&buf)?;
+    }
+    let mut buf: [u8; 1] = [0];
+    for _ in 1..=(byte_count % 1024) {
+        br.read_exact(&mut buf)?;
+        out.push(buf[0]);
+    }
+
+    Ok(out)
+}
+
 pub fn write_u32_le(num: u32, bw: &mut dyn Write) -> Result<()> {
-    bw.write(&num.to_le_bytes())?;
+    bw.write_all(&num.to_le_bytes())?;
     Ok(())
 }

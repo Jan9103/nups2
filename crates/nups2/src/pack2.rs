@@ -28,9 +28,9 @@ impl Pack2 {
             "{o}\"asset_count\": {asset_count}, \"length\": {length}, \"map_offset\": {map_offset}, \"assets\": {assets}{c}",
             o = "{",
             c = "}",
-            asset_count = self.asset_count.to_string(),
-            length = self.length.to_string(),
-            map_offset = self.map_offset.to_string(),
+            asset_count = self.asset_count,
+            length = self.length,
+            map_offset = self.map_offset,
             assets = self.ls_assets_as_json(),
         )
     }
@@ -51,14 +51,13 @@ impl Pack2 {
 
     pub fn apply_filename_lookup_table(&mut self, filename_lookup_table: &HashMap<u64, String>) {
         for asset in self.assets.iter_mut() {
-            match filename_lookup_table.get(&asset.name_hash) {
-                Some(name) => asset.name = Some(name.clone()),
-                None => (),
+            if let Some(name) = filename_lookup_table.get(&asset.name_hash) {
+                asset.name = Some(name.clone())
             }
         }
     }
 
-    pub fn apply_filename_list(&mut self, filename_list: &Vec<String>) {
+    pub fn apply_filename_list(&mut self, filename_list: &[String]) {
         self.apply_filename_lookup_table(&crc64::filename_list_to_lookup_table(filename_list));
     }
 
@@ -86,13 +85,7 @@ impl Pack2 {
             let asset = Asset::load_from_br(br)?;
             if asset.name_hash == 0x4137cc65bd97fd30 {
                 let old_stream_position: u64 = br.stream_position()?;
-                filenames = Some(
-                    asset
-                        .extract_text(br)?
-                        .lines()
-                        .map(|i| String::from(i))
-                        .collect(),
-                );
+                filenames = Some(asset.extract_text(br)?.lines().map(String::from).collect());
                 br.seek(SeekFrom::Start(old_stream_position))?;
             }
             // if !asset.is_zipped {
@@ -170,10 +163,9 @@ impl Pack2 {
         output_directory: &Path,
     ) -> Result<()> {
         for asset in self.assets.iter() {
-            if asset.name.is_none() {
-                continue;
-            }
-            if asset.name.clone().unwrap_or("".into()) == file_to_extract {
+            if asset.name.clone().unwrap_or("".into()) == file_to_extract
+                || format!("0x{:X}", asset.name_hash) == file_to_extract
+            {
                 let mut fos: File = File::create_new(output_directory.join(file_to_extract))?;
                 asset.extract_to_file(br, &mut fos)?;
                 return Ok(());
@@ -193,7 +185,7 @@ impl Pack2 {
                 .iter()
                 .map(|i| i.to_json())
                 .collect::<Vec<String>>()
-                .join(", "),
+                .join(","),
         )
     }
 
@@ -240,8 +232,8 @@ impl Pack2 {
     pub fn write_manifest_file(&self, manifst_file: &Path) -> Result<()> {
         let mut br: File = File::create_new(manifst_file)?;
         for asset in self.assets.iter() {
-            br.write(&asset.name_hash.to_be_bytes())?;
-            br.write(&asset.data_hash.to_be_bytes())?;
+            br.write_all(&asset.name_hash.to_be_bytes())?;
+            br.write_all(&asset.data_hash.to_be_bytes())?;
         }
         br.flush()?;
         Ok(())
@@ -261,7 +253,7 @@ impl Pack2 {
                         result.push(ManifestDiffEntry::new(
                             manifest_entry.0,
                             Some(manifest_entry.1),
-                            Some((&self.assets[asset_index]).data_hash),
+                            Some((self.assets[asset_index]).data_hash),
                         ));
                     }
                 }
@@ -303,16 +295,18 @@ pub struct Asset {
 impl Asset {
     #[cfg(feature = "json")]
     pub fn to_json(&self) -> String {
+        use crate::json_utils::escape_string;
+
         format!(
             "{o}\"name\": {name}, \"name_hash\": {name_hash}, \"offset\": {offset}, \"data_length\": {data_length}, \"is_zipped\": {is_zipped}, \"data_hash\": {data_hash}, \"unzipped_length\": {unzipped_length}{c}",
             o = "{",
             c = "}",
-            name = if self.name.is_some() {format!("\"{}\"", str::replace(str::replace(self.name.clone().unwrap().as_str(), "\\", "\\\\").as_str(), "\"", "\\\""))} else {String::from("null")},
-            name_hash = self.name_hash.to_string(),
-            offset = self.offset.to_string(),
-            data_length = self.data_length.to_string(),
-            data_hash = self.data_hash.to_string(),
-            unzipped_length = self.unzipped_length.to_string(),
+            name = if self.name.is_some() {escape_string(self.name.clone().unwrap().as_str())} else {String::from("null")},
+            name_hash = self.name_hash,
+            offset = self.offset,
+            data_length = self.data_length,
+            data_hash = self.data_hash,
+            unzipped_length = self.unzipped_length,
             is_zipped = if self.is_zipped {"true"} else {"false"},
         )
     }
@@ -364,12 +358,12 @@ impl Asset {
         let mut buffer: [u8; 1024] = [0; 1024];
         for _ in 1..=(self.data_length >> 10) {
             pack_file_stream.read_exact(&mut buffer)?;
-            output_file_steam.write(&buffer)?;
+            output_file_steam.write_all(&buffer)?;
         }
         let mut buffer: [u8; 1] = [0];
         for _ in 1..=(self.data_length % 1024) {
             pack_file_stream.read_exact(&mut buffer)?;
-            output_file_steam.write(&buffer)?;
+            output_file_steam.write_all(&buffer)?;
         }
 
         output_file_steam.flush()?;
@@ -413,12 +407,12 @@ impl Asset {
         let mut buf: [u8; 1024] = [0; 1024];
         for _ in 1..=(self.unzipped_length >> 10) {
             d.read_exact(&mut buf)?;
-            output_file_steam.write(&buf)?;
+            output_file_steam.write_all(&buf)?;
         }
         let mut buf: [u8; 1] = [0];
         for _ in 1..=(self.unzipped_length % 1024) {
             d.read_exact(&mut buf)?;
-            output_file_steam.write(&buf)?;
+            output_file_steam.write_all(&buf)?;
         }
         output_file_steam.flush()?;
 
@@ -430,14 +424,7 @@ impl Asset {
             self.offset + if self.is_zipped { 8 } else { 0 },
         ))?;
 
-        let mut out: Vec<u8> = Vec::with_capacity(self.data_length as usize);
-        let mut buf: [u8; 1] = [0; 1];
-        for _ in 1..=self.data_length {
-            pack_file_stream.read_exact(&mut buf)?;
-            out.push(buf[0]);
-        }
-
-        Ok(out)
+        read_big_x_bytes(pack_file_stream, self.data_length as usize)
     }
 
     pub fn extract_text(&self, pack_file_stream: &mut File) -> Result<String> {

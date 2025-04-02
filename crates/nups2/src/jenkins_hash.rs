@@ -8,7 +8,7 @@ pub fn one_at_a_time(input_bytes: &[u8]) -> u32 {
     hash = hash.overflowing_add(hash << 3).0;
     hash ^= hash >> 11;
     hash = hash.overflowing_add(hash << 15).0;
-    hash as u32
+    hash
 }
 
 #[cfg(test)]

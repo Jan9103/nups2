@@ -17,7 +17,7 @@ pub fn convert_filename(name: &str) -> u64 {
     hash(name.to_uppercase().as_bytes())
 }
 
-pub fn filename_list_to_lookup_table(filename_list: &Vec<String>) -> HashMap<u64, String> {
+pub fn filename_list_to_lookup_table(filename_list: &[String]) -> HashMap<u64, String> {
     filename_list
         .iter()
         .map(|i| (convert_filename(i.as_str()), i.clone()))

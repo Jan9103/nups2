@@ -12,10 +12,13 @@ pub mod dme;
 #[cfg(feature = "filename_scraper")]
 pub mod filename_extractor;
 pub mod jenkins_hash;
+pub mod json_utils;
+#[cfg(feature = "pack1")]
+pub mod pack1;
 pub mod pack2;
 #[cfg(feature = "manifests")]
 pub mod pack2_manifest;
 #[cfg(feature = "rainbow_table")]
 pub mod rainbow_table;
 
-pub mod to_glb;
+//pub mod to_glb;

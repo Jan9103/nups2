@@ -22,6 +22,7 @@ const SKIP_SIGNATURES_IN_FAST_MODE: &[&[u8]] = &[
 const FILENAME_REGEX_STRINGS: [&str; 5] = [
     r#"[A-Za-z0-9<>._-]+\.[a-zA-Z0-9]{2,5}"#,
     r#"[A-Za-z0-9<>._-]+\.[a-zA-Z0-9]{2,5}"#,
+    // extensions, which might be present, but yield no results: cfx
     r#"[A-Za-z0-9<>._-]+\.(adr|agr|ags|apb|apx|bat|bmp|bin|cdt|cnk0|cnk1|cnk2|cnk3|cnk4|cnk5|crc|crt|cso|cur|dat|db|dds|def|dir|dll|dma|dme|dmv|dsk|dx11efb|dx11rsb|dx11ssb|eco|efb|exe|fbx|fsb|fx|fxh|fxd|fxo|gr2|gfx|gnf|i64|ind|ini|jpg|lst|lua|mrn|nsa|pak|pem|playerstudio|png|prsb|psd|pssb|swf|tga|thm|tome|ttf|txt|vnfo|wav|xlsx|xmd|xml|xrsb|xssb|zone)"#,
     r#"[A-Za-z0-9<>._-]+\.(?i)(adr|agr|ags|apb|apx|bat|bmp|bin|cdt|cnk0|cnk1|cnk2|cnk3|cnk4|cnk5|crc|crt|cso|cur|dat|db|dds|def|dir|dll|dma|dme|dmv|dsk|dx11efb|dx11rsb|dx11ssb|eco|efb|exe|fbx|fsb|fx|fxh|fxd|fxo|gr2|gfx|gnf|i64|ind|ini|jpg|lst|lua|mrn|nsa|pak|pem|playerstudio|png|prsb|psd|pssb|swf|tga|thm|tome|ttf|txt|vnfo|wav|xlsx|xmd|xml|xrsb|xssb|zone)"#,
     r#"[A-Za-z0-9<>._-]+\.(?i)(adr|agr|ags|apb|apx|bat|bmp|bin|cdt|cnk0|cnk1|cnk2|cnk3|cnk4|cnk5|crc|crt|cso|cur|dat|db|dds|def|dir|dll|dma|dme|dmv|dsk|dx11efb|dx11rsb|dx11ssb|eco|efb|exe|fbx|fsb|fx|fxh|fxd|fxo|gr2|gfx|gnf|i64|ind|ini|jpg|lst|lua|mrn|nsa|pak|pem|playerstudio|png|prsb|psd|pssb|swf|tga|thm|tome|ttf|txt|vnfo|wav|xlsx|xmd|xml|xrsb|xssb|zone)"#,
@@ -49,21 +50,20 @@ pub fn extract_names(
     let mut output: Vec<String> = Vec::new();
 
     'asset_loop: for asset in pack.assets.iter() {
-        if limit_to_files != None {
-            if !limit_to_files.as_ref().unwrap().contains(&asset.name_hash) {
-                continue 'asset_loop;
-            }
+        if limit_to_files.is_some() && !limit_to_files.as_ref().unwrap().contains(&asset.name_hash)
+        {
+            continue 'asset_loop;
         }
         if asset.unzipped_length > filesize_limit || asset.data_length > (filesize_limit as u64) {
             continue 'asset_loop;
         }
         let asset_data: Vec<u8> = asset.extract_bytes(br)?;
         if try_skip_binaries {
-            if [0x00, 0xFF].contains(asset_data.get(0).unwrap_or(&0x00u8)) {
+            if [0x00, 0xFF].contains(asset_data.first().unwrap_or(&0x00u8)) {
                 continue 'asset_loop;
             }
             for sig in SKIP_SIGNATURES_IN_FAST_MODE {
-                if asset_data.starts_with(&sig) {
+                if asset_data.starts_with(sig) {
                     continue 'asset_loop;
                 }
             }
@@ -126,7 +126,7 @@ pub fn extract_names(
         // remove floats (example: 1.234)
         let float_regex: Regex =
             Regex::new("^[0-9.]+$").expect("Failed to compile filename_extractor float_regex");
-        output.retain(|i| !float_regex.is_match(&i.as_str()));
+        output.retain(|i| !float_regex.is_match(i.as_str()));
     }
 
     Ok(output
@@ -144,11 +144,9 @@ fn find_text_patches(binary: &Vec<u8>) -> Vec<String> {
     for b in binary {
         if INTERRESTING_BYTES.contains(b) {
             buffer.push(*b as char);
-        } else {
-            if !buffer.is_empty() {
-                output.push(buffer);
-                buffer = String::new();
-            }
+        } else if !buffer.is_empty() {
+            output.push(buffer);
+            buffer = String::new();
         }
     }
 

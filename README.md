@@ -46,6 +46,9 @@ filename-scraper finds diffrent results.
   * convert to json
 * `dme` (v4) files
   * read (note: larger than RAM files are not yet supported)
+* `pack1` files
+  * read filelist
+  * extract files
 
 
 ## usage

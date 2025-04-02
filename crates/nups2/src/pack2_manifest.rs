@@ -91,6 +91,7 @@ pub fn render_for_humans(
     out.join("\n")
 }
 
+/// (namehash, content-hash)
 pub type Manifest = Vec<(u64, u32)>;
 pub type ManifestDiff = Vec<ManifestDiffEntry>;
 
@@ -108,4 +109,38 @@ impl ManifestDiffEntry {
             new_data_hash,
         }
     }
+}
+
+pub fn diff_two_manifests(old_manifest: &Manifest, new_manifest: &Manifest) -> ManifestDiff {
+    let mut result: ManifestDiff = ManifestDiff::new();
+    for old_manifest_entry in old_manifest.iter() {
+        match new_manifest.iter().find(|i| i.0 == old_manifest_entry.0) {
+            Some(new_manifest_entry) => {
+                if old_manifest_entry.1 != new_manifest_entry.1 {
+                    result.push(ManifestDiffEntry::new(
+                        old_manifest_entry.0,
+                        Some(old_manifest_entry.1),
+                        Some(new_manifest_entry.1),
+                    ));
+                } // else identical -> no diff
+            }
+            None => result.push(ManifestDiffEntry::new(
+                old_manifest_entry.0,
+                Some(old_manifest_entry.1),
+                None,
+            )),
+        }
+    }
+    for new_manifest_entry in new_manifest.iter().filter(|new_manifest_entry| {
+        !old_manifest
+            .iter()
+            .any(|old_manifest_entry| old_manifest_entry.0 == new_manifest_entry.0)
+    }) {
+        result.push(ManifestDiffEntry::new(
+            new_manifest_entry.0,
+            None,
+            Some(new_manifest_entry.1),
+        ));
+    }
+    result
 }
