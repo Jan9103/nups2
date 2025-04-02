@@ -9,8 +9,8 @@ pack2 = []
 pack2_filename_scraper = ["pack2", "nups2/filename_scraper"]
 
 [dependencies]
-nu-plugin = "0.101.0"
-nu-protocol = "0.101.0"
+nu-plugin = "0.102.0"
+nu-protocol = "0.102.0"
 
 [dependencies.nups2]
 path = "../nups2"
