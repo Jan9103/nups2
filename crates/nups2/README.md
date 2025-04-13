@@ -12,8 +12,7 @@ The minimal build for listing and extracting `pack2` file contents can be compil
 Feature flag | Description
 ------------ | -----------
 `default`    | Everything needed for a good experience with the cli tool (only `pack2` and nothing else)
-`all`        | All features you might want (excludes `debug_logs`)
-`debug_logs` | Print debug information to `stderr` constantly (as the name suggests only intended for debugging)
+`all`        | All features you might want
 
 ### General
 
@@ -21,6 +20,7 @@ Feature flag | Description
 ------------ | -----------
 `json`       | Add `--json` to the cli and `to_json()` to the library
 `use_comfy_table` | Make use of the `comfy_table` library to make the CLI output look good
+`fast`       | Add some extra multithreading at the cost of longer compile-times, binary-size, etc
 
 
 ### File format related
@@ -40,7 +40,7 @@ Feature flag | Description
 `dma`        | `.dma` file support (materials) (mostly untested)
 `dme`        | `.dme` file support (meshes and bones) (mostly untested)
 `adr`        | `.adr` file support (actor definitions) (DOES NOT WORK)
-`pack1`      | `.pack` (`.pack2` predecessor) (only `ls`)
+`pack1`      | `.pack` (`.pack2` predecessor) (ls, extract, pack2->1 converter)
 
 
 ## Usage as library
@@ -54,3 +54,8 @@ Use `rust-analyzer`. As starting point use `nups2::pack2::Pack2::load_from_file`
 The default features should be good enough for 99% of usecases.  
 Just run `cargo build --release` and grab your binary from `target/release/nups2`.  
 Run `nups2 --help` for a list of sub-commands and then `nups2 SUBCOMMAND --help` for further infos.
+
+## Notes
+
+* Logging: [log crate](https://crates.io/crates/log)
+  * When the `cli` feature is active: [env_logger crate](https://crates.io/crates/env_logger)

@@ -13,8 +13,9 @@ use std::path::PathBuf;
 use std::process::exit;
 
 use crate::pack2::Pack2;
+use crate::Nups2Error;
 
-pub fn cli() -> std::io::Result<()> {
+pub fn cli() -> Result<(), Nups2Error> {
     // dbg!(crate::dma::Dma::read(&mut File::open(
     //     "extracted/assets_x64_0/Weapon_NC_PistolMag_Lod2.dma"
     // )?)?);
@@ -82,6 +83,7 @@ pub fn cli() -> std::io::Result<()> {
             #[cfg(feature = "rainbow_table")]
             rainbow_table_file,
         } => {
+            log::trace!("open pack2 file {pack2_file:?}");
             let mut br: File = File::open(pack2_file)?;
             #[allow(unused_mut)]
             let mut pack2: Pack2 = Pack2::load_from_file(&mut br)?;
@@ -90,6 +92,7 @@ pub fn cli() -> std::io::Result<()> {
                 pack2.crack_names_with_rainbow_table(rtf.as_path())?;
             }
             if let Some(tmp) = filename_list_file {
+                log::trace!("applying filename list {tmp:?}");
                 pack2.apply_filename_list(&read_file_lines(&tmp)?);
             }
             if !exclude_named {
@@ -215,6 +218,53 @@ pub fn cli() -> std::io::Result<()> {
                 return Ok(());
             }
             println!("{}", pack1.ls_for_humans());
+        }
+
+        #[cfg(feature = "pack1")]
+        Commands::Pack1ExtractAll {
+            pack1_file,
+            output_dir,
+            chunk_sub_dirs,
+        } => {
+            use crate::pack1::Pack1;
+            let mut br: File = File::open(pack1_file)?;
+            let pack1: Pack1 = Pack1::load_from_file(&mut br)?;
+            pack1.extract_all(&mut br, &output_dir, chunk_sub_dirs)?;
+        }
+
+        #[cfg(feature = "pack1")]
+        Commands::ConvertPack2ToPack1 {
+            pack2_file,
+            pack1_file,
+            filename_list_file,
+            #[cfg(feature = "rainbow_table")]
+            rainbow_table_file,
+            unknown_name_handling,
+        } => {
+            use crate::pack1::Pack1;
+
+            log::info!("Loading pack2 file");
+            let mut br: File = File::open(pack2_file)?;
+            #[allow(unused_mut)]
+            let mut pack2: Pack2 = Pack2::load_from_file(&mut br)?;
+            log::info!("Applying namelists");
+            #[cfg(feature = "rainbow_table")]
+            if let Some(rtf) = rainbow_table_file {
+                pack2.crack_names_with_rainbow_table(rtf.as_path())?;
+            }
+            if let Some(tmp) = filename_list_file {
+                log::trace!("applying filename list {tmp:?}");
+                pack2.apply_filename_list(&read_file_lines(&tmp)?);
+            }
+
+            log::info!("Converting pack2 to pack1");
+            let pack1: Pack1 = Pack1::from_pack2(
+                pack2,
+                &unknown_name_handling.unwrap_or(crate::pack1::UnknownNameHandling::ReturnError),
+            )?;
+            log::info!("Writing pack1 file");
+            let mut pack1_br: File = File::create_new(pack1_file)?;
+            pack1.write(&mut br, &mut pack1_br)?;
         }
 
         #[cfg(feature = "rainbow_table")]
@@ -395,6 +445,39 @@ enum Commands {
         #[clap(long, action)]
         json: bool,
     },
+    /// Extract all files from a pack1 file
+    #[cfg(feature = "pack1")]
+    Pack1ExtractAll {
+        pack1_file: PathBuf,
+
+        /// Into which dircetory should the extracted files be put?
+        #[clap(long, default_value = ".")]
+        output_dir: PathBuf,
+
+        /// put each chunk into its own subdirectory
+        #[clap(long, action)]
+        chunk_sub_dirs: bool,
+    },
+
+    /// this only works if all filenames are known
+    #[cfg(feature = "pack1")]
+    ConvertPack2ToPack1 {
+        pack2_file: PathBuf,
+        pack1_file: PathBuf,
+
+        /// Path to a file containing a newline-seperated list of filenames (for example from pack2-scrape-filenames)
+        #[clap(long)]
+        filename_list_file: Option<PathBuf>,
+
+        #[clap(long)]
+        unknown_name_handling: Option<crate::pack1::UnknownNameHandling>,
+
+        /// Rainbow-table file to use for decrypting names
+        /// You can generate one via rainbowtable-build
+        #[cfg(feature = "rainbow_table")]
+        #[clap(long)]
+        rainbow_table_file: Option<PathBuf>,
+    },
 
     #[cfg(feature = "rainbow_table")]
     RainbowtableBuild {
@@ -421,4 +504,25 @@ enum Commands {
         filename_list_file: PathBuf,
         output_file: PathBuf,
     },
+}
+
+#[cfg(feature = "pack1")]
+impl clap::ValueEnum for crate::pack1::UnknownNameHandling {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Self::ReturnError, Self::GenerateName, Self::SkipFile]
+    }
+
+    fn to_possible_value(&self) -> Option<clap::builder::PossibleValue> {
+        match self {
+            crate::pack1::UnknownNameHandling::ReturnError => {
+                Some(clap::builder::PossibleValue::new("return-error"))
+            }
+            crate::pack1::UnknownNameHandling::GenerateName => {
+                Some(clap::builder::PossibleValue::new("generate-name"))
+            }
+            crate::pack1::UnknownNameHandling::SkipFile => {
+                Some(clap::builder::PossibleValue::new("skip-file"))
+            }
+        }
+    }
 }

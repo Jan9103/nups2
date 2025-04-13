@@ -8,7 +8,7 @@ A decoder for planetside2 files (mainly `pack2` for now):
 **NOTE:** If you just want to explore some files you can get pre-extracted ones on the discord
 and would probably have a better time with [ps2ls2][].
 
-Currently the only upsides compared to `ps2ls2` are probably that this is not a GUI and that the
+Currently the only "upsides" compared to `ps2ls2` are probably that this is not a GUI and that the
 filename-scraper finds diffrent results.
 
 ## Features
@@ -29,6 +29,11 @@ filename-scraper finds diffrent results.
     * json
   * extract files
   * scrape filenames
+  * manifests (for `diff` between updates, etc)
+* `pack1`:
+  * list contents
+  * extract files
+  * convert pack2 to pack1
 
 ### `nups2` (library)
 
@@ -49,6 +54,7 @@ filename-scraper finds diffrent results.
 * `pack1` files
   * read filelist
   * extract files
+  * convert pack2 to pack1
 
 
 ## usage
@@ -167,6 +173,14 @@ I used some external libraries in this implementation:
 * [regex][] as regex engine.
 * [quick-xml][] and [serde][] for `.adr` files.
 * [nushell][]
+* [log][] and [env_logger][] for logging.
+
+## Legal stuff
+
+This project is not affiliated with or endorsed by any company. This includes but is not limited to Sony Online Entertainment, the Rust Foundation, and Microsoft.  
+You may only use the content extracted by this tool if you hold a valid license from the respective copyright holders.  
+No copyrighted assets are provided by or on behalf of this project. Users are responsible for sourcing such content independently.  
+Please be mindful of intellectual property rights and ensure that all usage complies with applicable laws and regulations.
 
 
 
@@ -186,3 +200,5 @@ I used some external libraries in this implementation:
 [regex]: https://crates.io/crates/regex
 [ryanjsims]: https://github.com/ryanjsims
 [serde]: https://crates.io/crates/serde
+[log]: https://crates.io/crates/log
+[env_logger]: https://crates.io/crates/env_logger

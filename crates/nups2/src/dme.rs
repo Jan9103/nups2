@@ -19,8 +19,7 @@ pub struct Dme {
 
 impl Dme {
     pub fn read(br: &mut dyn Read) -> std::io::Result<Self> {
-        #[cfg(feature = "debug_logs")]
-        eprintln!("[Dme::read] start");
+        log::trace!("[Dme::read] start");
         let magic: u32 = read_u32_be(br)?;
         assert_eq!(magic, 0x444d4f44, "DME file invalid (missing magick value)");
         let version: u32 = read_u32_le(br)?;
@@ -43,8 +42,7 @@ impl Dme {
         let bounding_box_max: Vector3 = read_vector3(br)?;
 
         let mesh_count: u32 = read_u32_le(br)?;
-        #[cfg(feature = "debug_logs")]
-        eprintln!("[Dme::read] reading meshes ({})", mesh_count);
+        log::debug!("[Dme::read] reading meshes ({})", mesh_count);
         let mut meshes: Vec<DmeMesh> = Vec::with_capacity(mesh_count as usize);
         for _ in 1..=mesh_count {
             let mesh = DmeMesh::read(br)?;
@@ -52,8 +50,7 @@ impl Dme {
         }
 
         let bone_draw_call_count: u32 = read_u32_le(br)?;
-        #[cfg(feature = "debug_logs")]
-        eprintln!(
+        log::debug!(
             "[Dme::read] reading bone draw calls ({})",
             bone_draw_call_count
         );
@@ -64,8 +61,7 @@ impl Dme {
         }
 
         let bone_map_entry_count: u32 = read_u32_le(br)?;
-        #[cfg(feature = "debug_logs")]
-        eprintln!("[Dme::read] reading bone map ({})", bone_map_entry_count);
+        log::debug!("[Dme::read] reading bone map ({})", bone_map_entry_count);
         let mut bone_map_entries: Vec<DmeBoneMapEntry> =
             Vec::with_capacity(bone_map_entry_count as usize);
         for _ in 1..=bone_map_entry_count {
@@ -74,8 +70,7 @@ impl Dme {
         }
 
         let bone_count: u32 = read_u32_le(br)?;
-        #[cfg(feature = "debug_logs")]
-        eprintln!(
+        log::debug!(
             "[Dme::read] reading bone inverse_bind_poses ({})",
             bone_count
         );
@@ -87,16 +82,14 @@ impl Dme {
             let v4: Vector4 = read_vector3_plus1(br, 1f32)?;
             bone_inverse_bind_poses.push((v1, v2, v3, v4));
         }
-        #[cfg(feature = "debug_logs")]
-        eprintln!("[Dme::read] reading bone min_max");
+        log::debug!("[Dme::read] reading bone min_max");
         let mut bone_min_max: Vec<(Vector3, Vector3)> = Vec::with_capacity(bone_count as usize);
         for _ in 1..=bone_count {
             let min: Vector3 = read_vector3(br)?;
             let max: Vector3 = read_vector3(br)?;
             bone_min_max.push((min, max));
         }
-        #[cfg(feature = "debug_logs")]
-        eprintln!("[Dme::read] reading bone name_hash");
+        log::debug!("[Dme::read] reading bone name_hash");
         let mut bones: Vec<DmeBone> = Vec::with_capacity(bone_count as usize);
         for i in 0..(bone_count as usize) {
             let name_hash: u32 = read_u32_le(br)?;
@@ -109,8 +102,7 @@ impl Dme {
             });
         }
 
-        #[cfg(feature = "debug_logs")]
-        eprintln!("[Dme::read] finished");
+        log::debug!("[Dme::read] finished");
         Ok(Self {
             bounding_box: (bounding_box_min, bounding_box_max),
             dma,

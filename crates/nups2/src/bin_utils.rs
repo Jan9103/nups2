@@ -65,22 +65,36 @@ pub fn read_x_bytes(br: &mut dyn Read, byte_count: usize) -> Result<Vec<u8>> {
 /// read_x_bytes, but optimized for bigger things, such as 3d-models
 pub fn read_big_x_bytes(br: &mut dyn Read, byte_count: usize) -> Result<Vec<u8>> {
     let mut out: Vec<u8> = Vec::with_capacity(byte_count);
-
+    clone_big_x_bytes(br, &mut out, byte_count)?;
+    Ok(out)
+}
+/// read_x_bytes, but optimized for bigger things, such as 3d-models
+pub fn clone_big_x_bytes(
+    read_br: &mut dyn Read,
+    write_br: &mut dyn Write,
+    byte_count: usize,
+) -> Result<()> {
     let mut buf: [u8; 1024] = [0; 1024];
     for _ in 1..=(byte_count >> 10) {
-        br.read_exact(&mut buf)?;
-        out.write_all(&buf)?;
+        read_br.read_exact(&mut buf)?;
+        write_br.write_all(&buf)?;
     }
     let mut buf: [u8; 1] = [0];
     for _ in 1..=(byte_count % 1024) {
-        br.read_exact(&mut buf)?;
-        out.push(buf[0]);
+        read_br.read_exact(&mut buf)?;
+        write_br.write_all(&buf)?;
     }
-
-    Ok(out)
+    Ok(())
 }
 
 pub fn write_u32_le(num: u32, bw: &mut dyn Write) -> Result<()> {
     bw.write_all(&num.to_le_bytes())?;
     Ok(())
 }
+pub fn write_u32_be(num: u32, bw: &mut dyn Write) -> Result<()> {
+    bw.write_all(&num.to_be_bytes())?;
+    Ok(())
+}
+
+#[cfg(any(target_pointer_width = "16", target_pointer_width = "32"))]
+compile_error!("Only systems with a pointer width of at least 64bit are supported (not sure how you are installing modern ps2 on a ThinkPad 300 anyway).");

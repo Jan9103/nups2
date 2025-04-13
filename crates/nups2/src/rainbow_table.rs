@@ -56,7 +56,7 @@ pub mod build {
                 word_count,
                 &mut br,
             )?;
-            println!("Finished generating for word_count={}", word_count);
+            log::info!("Finished generating for word_count={}", word_count);
         }
         Ok(())
     }

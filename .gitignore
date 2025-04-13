@@ -1,4 +1,6 @@
 *.pack2
+*.pack1
+*.pack
 /*.manifest
 /*.txt
 /extracted/

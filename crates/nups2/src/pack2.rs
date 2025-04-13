@@ -3,10 +3,11 @@ use crate::cli_utils::humanise_bytes;
 use crate::crc64;
 use flate2::read::ZlibDecoder;
 use std::collections::HashMap;
+use std::fmt::Display;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::{prelude::*, Result, SeekFrom};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 const ZIPPED_FLAGS: [u32; 2] = [0x01, 0x11];
 #[allow(dead_code)]
@@ -90,7 +91,6 @@ impl Pack2 {
             }
             // if !asset.is_zipped {
             //     let old_stream_position: u64 = br.stream_position()?;
-            //     println!("EXTRACTING");
             //     let mut fos: File = File::create_new(format!("EXTRACTED_{}", &asset_id))?;
             //     asset.raw_dump_to_file(&mut br, &mut fos)?;
             //     br.seek(SeekFrom::Start(old_stream_position))?;
@@ -133,12 +133,10 @@ impl Pack2 {
 
     pub fn extract_all_named(&self, br: &mut File, output_directory: &Path) -> Result<()> {
         for asset in self.assets.iter() {
-            if asset.name.is_some() {
-                let mut fos: File =
-                    File::create_new(output_directory.join(asset.name.clone().unwrap()))?;
-                // let mut fos: File = File::create_new(
-                //     format!("extract/{}", asset.name.clone().unwrap_or("".into())).as_str(),
-                // )?;
+            if let Some(ref name) = asset.name {
+                let fp: PathBuf = output_directory.join(name);
+                log::info!("extracting {name} to {fp:?}");
+                let mut fos: File = File::create_new(fp)?;
                 asset.extract_to_file(br, &mut fos)?;
             }
         }
@@ -148,8 +146,9 @@ impl Pack2 {
     pub fn extract_all_unnamed(&self, br: &mut File, output_directory: &Path) -> Result<()> {
         for asset in self.assets.iter() {
             if asset.name.is_none() {
-                let mut fos: File =
-                    File::create_new(output_directory.join(format!("crc64_{}", asset.name_hash)))?;
+                let fp: PathBuf = output_directory.join(format!("crc_64_{}", asset.name_hash));
+                log::info!("extracting 0x{:X} to {fp:?}", asset.name_hash);
+                let mut fos: File = File::create_new(fp)?;
                 asset.extract_to_file(br, &mut fos)?;
             }
         }
@@ -285,7 +284,7 @@ impl Pack2 {
 pub struct Asset {
     pub name: Option<String>,
     pub name_hash: u64, // of uppercase filename
-    offset: u64,
+    pub offset: u64,
     pub data_length: u64,
     pub is_zipped: bool,
     pub data_hash: u32,
@@ -354,18 +353,11 @@ impl Asset {
         pack_file_stream.seek(SeekFrom::Start(
             self.offset + if self.is_zipped { 8 } else { 0 },
         ))?;
-
-        let mut buffer: [u8; 1024] = [0; 1024];
-        for _ in 1..=(self.data_length >> 10) {
-            pack_file_stream.read_exact(&mut buffer)?;
-            output_file_steam.write_all(&buffer)?;
-        }
-        let mut buffer: [u8; 1] = [0];
-        for _ in 1..=(self.data_length % 1024) {
-            pack_file_stream.read_exact(&mut buffer)?;
-            output_file_steam.write_all(&buffer)?;
-        }
-
+        clone_big_x_bytes(
+            pack_file_stream,
+            output_file_steam,
+            self.data_length as usize,
+        )?;
         output_file_steam.flush()?;
         Ok(())
     }
@@ -386,6 +378,7 @@ impl Asset {
         pack_file_stream: &mut File,
         output_file_steam: &mut File,
     ) -> Result<()> {
+        log::trace!("extracing asset {}", self);
         if self.is_zipped {
             self.extract_compressed_to_file(pack_file_stream, output_file_steam)
         } else {
@@ -403,17 +396,7 @@ impl Asset {
         ))?;
 
         let mut d = ZlibDecoder::new(BufReader::new(pack_file_stream));
-
-        let mut buf: [u8; 1024] = [0; 1024];
-        for _ in 1..=(self.unzipped_length >> 10) {
-            d.read_exact(&mut buf)?;
-            output_file_steam.write_all(&buf)?;
-        }
-        let mut buf: [u8; 1] = [0];
-        for _ in 1..=(self.unzipped_length % 1024) {
-            d.read_exact(&mut buf)?;
-            output_file_steam.write_all(&buf)?;
-        }
+        clone_big_x_bytes(&mut d, output_file_steam, self.unzipped_length as usize)?;
         output_file_steam.flush()?;
 
         Ok(())
@@ -443,5 +426,17 @@ impl Asset {
                 )),
             }
         }
+    }
+}
+
+impl Display for Asset {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "0x{h:X} ({n}) ({c})",
+            h = self.name_hash,
+            n = self.name.clone().unwrap_or(String::from("?")),
+            c = if self.is_zipped { "compressed" } else { "raw" }
+        )
     }
 }

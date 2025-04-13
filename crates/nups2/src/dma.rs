@@ -24,8 +24,7 @@ pub struct DmaParameter {
 
 impl Dma {
     pub fn read(br: &mut dyn Read) -> std::io::Result<Self> {
-        #[cfg(feature = "debug_logs")]
-        eprintln!("started reading dma");
+        log::trace!("started reading dma");
         let magic_value: u32 = read_u32_be(br)?;
         assert_eq!(magic_value, 0x444d4154u32, "Magick value of DMA is wrong");
         let version: u32 = read_u32_le(br)?;
@@ -44,8 +43,7 @@ impl Dma {
         for _ in 1..=material_count {
             materials.push(DmaMaterial::read(br)?);
         }
-        #[cfg(feature = "debug_logs")]
-        eprintln!("finished reading dma");
+        debug::trace!("finished reading dma");
         Ok(Self { version, materials })
     }
 

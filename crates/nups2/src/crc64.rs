@@ -17,11 +17,22 @@ pub fn convert_filename(name: &str) -> u64 {
     hash(name.to_uppercase().as_bytes())
 }
 
+#[cfg(feature = "fast")]
+pub fn filename_list_to_lookup_table(filename_list: &[String]) -> HashMap<u64, String> {
+    use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+
+    filename_list
+        .par_iter()
+        .map(|i| (convert_filename(i.as_str()), i.clone()))
+        .collect::<HashMap<u64, String>>()
+}
+
+#[cfg(not(feature = "fast"))]
 pub fn filename_list_to_lookup_table(filename_list: &[String]) -> HashMap<u64, String> {
     filename_list
         .iter()
         .map(|i| (convert_filename(i.as_str()), i.clone()))
-        .collect()
+        .collect::<HashMap<u64, String>>()
 }
 
 const CRC_TABLE: &[u64] = &[

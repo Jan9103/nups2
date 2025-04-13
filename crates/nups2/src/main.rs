@@ -1,17 +1,26 @@
 use std::process::exit;
 
 fn main() {
-    #[cfg(feature = "cli")]
+    start();
+}
+#[cfg(feature = "cli")]
+fn start() {
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    log::debug!("Debug log visible");
+    log::trace!("Trace log visible");
+
     match nups2::cli::cli() {
         Ok(_) => {}
         Err(err) => {
             eprintln!("COMMAND FAILED:");
-            eprintln!("{:?}", err);
+            eprintln!("{}", err);
             exit(1);
         }
     }
-    #[cfg(not(feature = "cli"))]
+}
+
+#[cfg(not(feature = "cli"))]
+fn start() {
     eprintln!("COMPILED WITHOUT CLI FEATURE -> NOTHING WILL HAPPEN");
-    #[cfg(not(feature = "cli"))]
     exit(1);
 }
