@@ -1,17 +1,16 @@
 [package]
 name = "nu_plugin_nups2"
-version = "0.103.0"
+version = "0.104.0"
 edition = "2021"
 
 [features]
-default = ["pack2", "pack2_filename_scraper"]
-pack2 = []
-pack2_filename_scraper = ["pack2", "nups2/filename_scraper"]
+default = []
 
 [dependencies]
-nu-plugin = "0.103.0"
-nu-protocol = "0.103.0"
+nu-plugin = "0.104.0"
+nu-protocol = "0.104.0"
 
 [dependencies.nups2]
 path = "../nups2"
 default-features = false
+features = ["fast", "manifests", "filename_scraper"]
