@@ -65,7 +65,7 @@ impl SimplePluginCommand for Pack2ScrapeFilenamesCommand {
         };
         let search_mode: usize = match crate::util::get_named_argument(call, "scrape_mode") {
             Some(Value::Int { val, .. }) => {
-                if val < 0 || val > 4 {
+                if !(0..=4).contains(&val) {
                     return Err(LabeledError::new("Only modes 0, 1, 2, 3, and 4 exist."));
                 };
                 val as usize
@@ -144,7 +144,7 @@ impl SimplePluginCommand for Pack2ScrapeFilenamesCommand {
             }
         };
 
-        match output_file.write(res.join("\n").as_bytes()) {
+        match output_file.write_all(res.join("\n").as_bytes()) {
             Ok(_) => (),
             Err(err) => {
                 return Err(LabeledError::new(format!(
@@ -154,6 +154,6 @@ impl SimplePluginCommand for Pack2ScrapeFilenamesCommand {
             }
         };
 
-        Ok(Value::nothing(call.head.clone()))
+        Ok(Value::nothing(call.head))
     }
 }

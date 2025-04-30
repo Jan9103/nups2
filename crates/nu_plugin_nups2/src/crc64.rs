@@ -46,6 +46,6 @@ impl SimplePluginCommand for Ps2Crc64Command {
                 ));
             }
         };
-        Ok(Value::string(result.to_string(), call.head.clone()))
+        Ok(Value::string(result.to_string(), call.head))
     }
 }

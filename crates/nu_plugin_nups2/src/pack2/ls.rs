@@ -32,6 +32,7 @@ impl SimplePluginCommand for Pack2LsCommand {
                 Type::Nothing,
                 Type::list(Type::Record(Box::new([
                     (String::from("name_hash"), Type::Any),
+                    (String::from("decoded_name"), Type::Any),
                     (String::from("is_zipped"), Type::Bool),
                     (String::from("data_hash"), Type::Int),
                     (String::from("data_length"), Type::Int),
@@ -103,11 +104,7 @@ impl SimplePluginCommand for Pack2LsCommand {
                     )));
                 }
             };
-            pack2.apply_filename_list(
-                &buf.lines()
-                    .map(|i| String::from(i))
-                    .collect::<Vec<String>>(),
-            );
+            pack2.apply_filename_list(&buf.lines().map(String::from).collect::<Vec<String>>());
         }
         let nu_assets: Vec<Value> = pack2
             .assets
@@ -115,37 +112,37 @@ impl SimplePluginCommand for Pack2LsCommand {
             .map(|asset| {
                 let mut nu_asset: Record = Record::new();
                 nu_asset.insert(
-                    String::from("name"),
+                    String::from("decoded_name"),
                     match asset.name {
-                        Some(n) => Value::string(n, call.head.clone()),
-                        None => Value::nothing(call.head.clone()),
+                        Some(n) => Value::string(n, call.head),
+                        None => Value::nothing(call.head),
                     },
                 );
                 // nushell can't handle i64 -> convert the hash to string
                 nu_asset.insert(
                     String::from("name_hash"),
-                    Value::string(asset.name_hash.to_string(), call.head.clone()),
+                    Value::string(asset.name_hash.to_string(), call.head),
                 );
                 nu_asset.insert(
                     String::from("is_zipped"),
-                    Value::bool(asset.is_zipped, call.head.clone()),
+                    Value::bool(asset.is_zipped, call.head),
                 );
                 nu_asset.insert(
                     String::from("data_hash"),
-                    Value::int(asset.data_hash as i64, call.head.clone()),
+                    Value::int(asset.data_hash as i64, call.head),
                 );
                 nu_asset.insert(
                     String::from("data_length"),
-                    Value::int(asset.data_length as i64, call.head.clone()),
+                    Value::int(asset.data_length as i64, call.head),
                 );
                 nu_asset.insert(
                     String::from("unzipped_length"),
-                    Value::int(asset.unzipped_length as i64, call.head.clone()),
+                    Value::int(asset.unzipped_length as i64, call.head),
                 );
-                Value::record(nu_asset, call.head.clone())
+                Value::record(nu_asset, call.head)
             })
             .collect();
 
-        Ok(Value::list(nu_assets, call.head.clone()))
+        Ok(Value::list(nu_assets, call.head))
     }
 }

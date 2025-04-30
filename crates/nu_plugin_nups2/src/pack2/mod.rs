@@ -1,8 +1,10 @@
 mod extract;
 mod ls;
-#[cfg(feature = "pack2_filename_scraper")]
+mod manifest_create;
+mod manifest_diff;
 mod scrape_filenames;
 pub use extract::Pack2ExtractCommand;
 pub use ls::Pack2LsCommand;
-#[cfg(feature = "pack2_filename_scraper")]
+pub use manifest_create::Pack2ManifestCreate;
+pub use manifest_diff::Pack2ManifestDiff;
 pub use scrape_filenames::Pack2ScrapeFilenamesCommand;

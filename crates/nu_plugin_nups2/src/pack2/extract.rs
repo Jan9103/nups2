@@ -124,11 +124,7 @@ impl SimplePluginCommand for Pack2ExtractCommand {
                         )));
                     }
                 };
-                pack2.apply_filename_list(
-                    &buf.lines()
-                        .map(|i| String::from(i))
-                        .collect::<Vec<String>>(),
-                );
+                pack2.apply_filename_list(&buf.lines().map(String::from).collect::<Vec<String>>());
             }
         }
 
@@ -211,6 +207,6 @@ impl SimplePluginCommand for Pack2ExtractCommand {
             }
         };
 
-        Ok(Value::nothing(call.head.clone()))
+        Ok(Value::nothing(call.head))
     }
 }
