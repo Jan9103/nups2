@@ -3,6 +3,7 @@ use std::io::Write;
 use std::option::Iter;
 
 use crate::bin_utils::write_u32_le;
+use crate::json_utils;
 use crate::{dma::Dma, dme::Dme};
 
 // https://docs.fileformat.com/3d/glb/
@@ -10,8 +11,8 @@ use crate::{dma::Dma, dme::Dme};
 const GLTF_CONTAINER_FORMAT_VERSION: u32 = 1;
 
 pub struct Glb {
-    json_head: GlbChunk,
-    bin_head: GlbChunk,
+    json_head: GlbJsonChunk,
+    bin_head: Box<dyn GlbChunk>,
 }
 
 impl Glb {
@@ -33,8 +34,7 @@ impl Glb {
 trait GlbChunk {
     fn length_in_bytes(&self) -> u32;
 
-    /// This destroys this object in order to reduce ram-usage (yes this is very purpose-build)
-    fn into_binary(mut self) -> Vec<u8>;
+    fn into_binary(&self) -> Vec<u8>;
 
     fn get_chunk_type_id() -> u32;
     fn get_padding_byte(&self) -> u8;
@@ -61,13 +61,12 @@ impl GlbChunk for GlbBinChunk {
         length_in_bytes + calc_chunk_padding_amount(length_in_bytes)
     }
 
-    /// This destroys this object in order to reduce ram-usage (yes this is very purpose-build)
-    fn into_binary(mut self) -> Vec<u8> {
+    fn into_binary(&self) -> Vec<u8> {
         let l: u32 = self.length_in_bytes();
         let mut res: Vec<u8> = Vec::new();
         res.extend_from_slice(&l.to_le_bytes());
         res.extend_from_slice(&Self::get_chunk_type_id().to_le_bytes());
-        res.append(&mut self.content); // this is a move, not a copy
+        res.append(&mut self.content.clone());
 
         let p: u8 = self.get_padding_byte();
         for _ in 0..calc_chunk_padding_amount(l) {
@@ -113,6 +112,28 @@ impl GlbChunkType {
     }
 }
 
+struct GlbJsonChunk {
+    json: GlbJsonObject,
+}
+
+impl GlbChunk for GlbJsonChunk {
+    fn length_in_bytes(&self) -> u32 {
+        self.into_binary().len() as u32
+    }
+
+    fn into_binary(&self) -> Vec<u8> {
+        self.json.compile().into_bytes()
+    }
+
+    fn get_chunk_type_id() -> u32 {
+        0x4E4F534A
+    }
+
+    fn get_padding_byte(&self) -> u8 {
+        0x20
+    }
+}
+
 /////////////// JSON GENERATION HELPER FUNCTIONS //////////////////
 
 enum GlbJsonObject {
@@ -120,6 +141,7 @@ enum GlbJsonObject {
     List(Vec<GlbJsonObject>),
     Text(String),
     Number(i64),
+    Null,
 }
 
 enum GlbJsonPathNode {
@@ -127,7 +149,36 @@ enum GlbJsonPathNode {
     Key(String),
 }
 
+type CompileError = &'static str;
 impl GlbJsonObject {
+    pub fn compile(&self) -> String {
+        match self {
+            Self::Record(hm) => {
+                format!(
+                    "{{{}}}",
+                    hm.iter()
+                        .map(|(k, v)| -> String {
+                            format!("{}:{}", json_utils::escape_string(k), v.compile())
+                        })
+                        .collect::<Vec<String>>()
+                        .join(",")
+                )
+            }
+            Self::List(l) => {
+                format!(
+                    "[{}]",
+                    l.iter()
+                        .map(|i| -> String { i.compile() })
+                        .collect::<Vec<String>>()
+                        .join(",")
+                )
+            }
+            Self::Text(s) => json_utils::escape_string(s),
+            Self::Number(n) => format!("{n}"),
+            Self::Null => String::from("null"),
+        }
+    }
+
     pub fn get_path(
         &self,
         mut path: Iter<GlbJsonPathNode>,
@@ -156,6 +207,7 @@ impl GlbJsonObject {
                 },
                 Self::Text(_) => Err("Text cant be indexed"),
                 Self::Number(_) => Err("Number cant be indexed"),
+                Self::Null => Err("Null cant be indexed"),
             }
         } else {
             Ok(self)
