@@ -7,5 +7,7 @@
 /crates/*/target/
 /ultimate_namelist*
 Cargo.lock
+/manifests/
+/namelists/
 
 !/LICENSE.txt

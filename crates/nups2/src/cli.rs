@@ -1,5 +1,6 @@
 use clap::Parser;
 use clap::Subcommand;
+use std::collections::HashMap;
 use std::fs::File;
 #[allow(unused_imports)]
 // for some reason rustc thinks this is unused, but removing it is and dosn't compile without
@@ -82,7 +83,10 @@ pub fn cli() -> Result<(), Nups2Error> {
             filename_list_file,
             #[cfg(feature = "rainbow_table")]
             rainbow_table_file,
+            #[cfg(feature = "manifests")]
+            last_extract_manifest,
         } => {
+            let mut name_lookup_table: HashMap<u64, String> = HashMap::new();
             log::trace!("open pack2 file {pack2_file:?}");
             let mut br: File = File::open(pack2_file)?;
             #[allow(unused_mut)]
@@ -92,15 +96,36 @@ pub fn cli() -> Result<(), Nups2Error> {
                 pack2.crack_names_with_rainbow_table(rtf.as_path())?;
             }
             if let Some(tmp) = filename_list_file {
-                log::trace!("applying filename list {tmp:?}");
-                pack2.apply_filename_list(&read_file_lines(&tmp)?);
+                name_lookup_table.extend(crate::crc64::filename_list_to_lookup_table(
+                    &read_file_lines(&tmp)?,
+                ));
             }
+            pack2.apply_filename_lookup_table(&name_lookup_table);
+            #[cfg(feature = "manifests")]
+            let manifest: crate::pack2_manifest::Manifest = if let Some(lem) = last_extract_manifest
+            {
+                crate::pack2_manifest::read_manifest_file(&lem)?
+            } else {
+                crate::pack2_manifest::Manifest::new()
+            };
             if !exclude_named {
-                pack2.extract_all_named(&mut br, output_dir.as_path())?;
+                #[cfg(not(feature = "manifests"))]
+                pack2.extract_all_named(&mut br, &output_dir)?;
+                #[cfg(feature = "manifests")]
+                pack2.incremental_extract_all_named(&mut br, &output_dir, &manifest)?;
             }
             if !exclude_unnamed {
-                pack2.extract_all_unnamed(&mut br, output_dir.as_path())?;
+                #[cfg(not(feature = "manifests"))]
+                pack2.extract_all_unnamed(&mut br, &output_dir)?;
+                #[cfg(feature = "manifests")]
+                pack2.incremental_extract_all_unnamed(&mut br, &output_dir, &manifest)?;
             }
+            #[cfg(feature = "manifests")]
+            pack2.incremental_extract_delete_old_files(
+                &output_dir,
+                &manifest,
+                &name_lookup_table,
+            )?;
         }
 
         #[cfg(feature = "filename_scraper")]
@@ -382,6 +407,10 @@ enum Commands {
         /// Path to a file containing a newline-seperated list of filenames (for example from pack2-scrape-filenames)
         #[clap(long)]
         filename_list_file: Option<PathBuf>,
+
+        #[cfg(feature = "manifests")]
+        #[clap(long)]
+        last_extract_manifest: Option<PathBuf>,
 
         /// Rainbow-table file to use for decrypting names
         /// You can generate one via rainbowtable-build

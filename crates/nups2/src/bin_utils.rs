@@ -13,6 +13,26 @@ pub fn read_u64_le(br: &mut dyn Read) -> Result<u64> {
     br.read_exact(&mut buf)?;
     Ok(u64::from_le_bytes(buf))
 }
+pub fn read_u8_le(br: &mut dyn Read) -> Result<u8> {
+    let mut buf: [u8; 1] = [0; 1];
+    br.read_exact(&mut buf)?;
+    Ok(u8::from_le_bytes(buf))
+}
+pub fn read_u8_be(br: &mut dyn Read) -> Result<u8> {
+    let mut buf: [u8; 1] = [0; 1];
+    br.read_exact(&mut buf)?;
+    Ok(u8::from_be_bytes(buf))
+}
+pub fn read_i64_le(br: &mut dyn Read) -> Result<i64> {
+    let mut buf: [u8; 8] = [0; 8];
+    br.read_exact(&mut buf)?;
+    Ok(i64::from_le_bytes(buf))
+}
+pub fn read_i64_be(br: &mut dyn Read) -> Result<i64> {
+    let mut buf: [u8; 8] = [0; 8];
+    br.read_exact(&mut buf)?;
+    Ok(i64::from_be_bytes(buf))
+}
 
 pub fn read_u32_be(br: &mut dyn Read) -> Result<u32> {
     let mut buf: [u8; 4] = [0; 4];
@@ -88,6 +108,10 @@ pub fn clone_big_x_bytes(
 }
 
 pub fn write_u32_le(num: u32, bw: &mut dyn Write) -> Result<()> {
+    bw.write_all(&num.to_le_bytes())?;
+    Ok(())
+}
+pub fn write_u16_le(num: u16, bw: &mut dyn Write) -> Result<()> {
     bw.write_all(&num.to_le_bytes())?;
     Ok(())
 }

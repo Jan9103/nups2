@@ -132,27 +132,96 @@ impl Pack2 {
     }
 
     pub fn extract_all_named(&self, br: &mut File, output_directory: &Path) -> Result<()> {
-        for asset in self.assets.iter() {
+        self.assets.iter().try_for_each(|asset| -> Result<()> {
             if let Some(ref name) = asset.name {
                 let fp: PathBuf = output_directory.join(name);
                 log::info!("extracting {name} to {fp:?}");
                 let mut fos: File = File::create_new(fp)?;
                 asset.extract_to_file(br, &mut fos)?;
             }
-        }
-        Ok(())
+            Ok(())
+        })
+    }
+
+    #[cfg(feature = "manifests")]
+    pub fn incremental_extract_all_named(
+        &self,
+        br: &mut File,
+        output_directory: &Path,
+        manifest: &crate::pack2_manifest::Manifest,
+    ) -> Result<()> {
+        self.assets.iter().try_for_each(|asset| -> Result<()> {
+            if let Some(ref name) = asset.name {
+                if !manifest.contains(&(asset.name_hash, asset.data_hash)) {
+                    let fp: PathBuf = output_directory.join(name);
+                    log::info!("extracting {name} to {fp:?}");
+                    if fp.exists() {
+                        std::fs::remove_file(&fp)?;
+                    }
+                    let mut fos: File = File::create_new(&fp)?;
+                    asset.extract_to_file(br, &mut fos)?;
+                }
+            }
+            Ok(())
+        })
     }
 
     pub fn extract_all_unnamed(&self, br: &mut File, output_directory: &Path) -> Result<()> {
-        for asset in self.assets.iter() {
+        self.assets.iter().try_for_each(|asset| -> Result<()> {
             if asset.name.is_none() {
                 let fp: PathBuf = output_directory.join(format!("crc_64_{}", asset.name_hash));
                 log::info!("extracting 0x{:X} to {fp:?}", asset.name_hash);
                 let mut fos: File = File::create_new(fp)?;
                 asset.extract_to_file(br, &mut fos)?;
             }
-        }
-        Ok(())
+            Ok(())
+        })
+    }
+
+    #[cfg(feature = "manifests")]
+    pub fn incremental_extract_all_unnamed(
+        &self,
+        br: &mut File,
+        output_directory: &Path,
+        manifest: &crate::pack2_manifest::Manifest,
+    ) -> Result<()> {
+        self.assets.iter().try_for_each(|asset| -> Result<()> {
+            if asset.name.is_none() && !manifest.contains(&(asset.name_hash, asset.data_hash)) {
+                let fp: PathBuf = output_directory.join(format!("crc_64_{}", asset.name_hash));
+                log::info!("extracting 0x{:X} to {fp:?}", asset.name_hash);
+                if fp.exists() {
+                    std::fs::remove_file(&fp)?;
+                }
+                let mut fos: File = File::create_new(&fp)?;
+                asset.extract_to_file(br, &mut fos)?;
+            }
+            Ok(())
+        })
+    }
+
+    #[cfg(feature = "manifests")]
+    pub fn incremental_extract_delete_old_files(
+        &self,
+        output_directory: &Path,
+        manifest: &crate::pack2_manifest::Manifest,
+        filename_lookup_table: &HashMap<u64, String>,
+    ) -> Result<()> {
+        self.diff_with_manifest(manifest)
+            .into_iter()
+            .filter(|de| de.new_data_hash.is_none())
+            .try_for_each(|i| -> Result<()> {
+                let fp: PathBuf = output_directory.join(format!("crc_64_{}", &i.name_hash));
+                if fp.is_file() {
+                    std::fs::remove_file(fp)?;
+                }
+                if let Some(name) = filename_lookup_table.get(&i.name_hash) {
+                    let fp: PathBuf = output_directory.join(name);
+                    if fp.is_file() {
+                        std::fs::remove_file(fp)?;
+                    }
+                }
+                Ok(())
+            })
     }
 
     pub fn extract_file(
