@@ -12,6 +12,8 @@ pub mod dme;
 mod error;
 #[cfg(feature = "filename_scraper")]
 pub mod filename_extractor;
+#[cfg(feature = "fsb")]
+pub mod fsb5;
 pub mod json_utils;
 #[cfg(feature = "pack1")]
 pub mod pack1;

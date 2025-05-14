@@ -11,7 +11,7 @@ codegen-units = 1
 opt-level = 3
 
 [features]
-default = ["json", "use_comfy_table", "filename_scraper", "manifests", "cli", "fast"]
+default = ["json", "use_comfy_table", "filename_scraper", "manifests", "cli", "fast", "all", "fsb"]
 all = ["default", "rainbow_table", "dma", "dme", "pack1"]
 adr = ["dep:quick-xml", "serde/derive"]  # This was a mistake. also not finished
 dma = []
@@ -24,6 +24,7 @@ use_comfy_table = ["dep:comfy-table"]
 cli = ["dep:clap", "dep:env_logger"]
 pack1 = []  # Incomplete (no extraction, re-encoding, etc) -> not included in "all"
 fast = ["dep:rayon"]
+fsb = []
 
 # since this is 100% offline and works with trusted data i don't prioritise up-to-date dependencies
 [dependencies]

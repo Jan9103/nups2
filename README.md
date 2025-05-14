@@ -7,8 +7,11 @@ A decoder for planetside2 files (mainly `pack2` for now):
 **NOTE:** If you just want to explore some files you can get pre-extracted ones on the discord
 and would probably have a better time with [ps2ls2][].
 
-Currently the only "upsides" compared to `ps2ls2` are probably that this is not a GUI and that the
-filename-scraper finds diffrent results.
+Comparison with `ps2ls2`:
+* ps2ls2 is a GUI, nups2 is a CLI
+* diffrent filename-scraper implementations
+* ps2ls2 supports more file-types
+* nups2 is fully open-source and uses no binary blobs ([ps2ls2 binary blob example](https://github.com/NatCracken/ps2ls2/blob/master/PS2LS/ps2ls/FMOD/fmod.dll))
 
 ## Features
 
@@ -144,15 +147,18 @@ I used the following peoples work for understanding these things:
 * [NatCracken][]
 * [RhettVX][]
 * [ryanjsims][]
+* [hearthsim][] (fsb5 audio)
 
 I used some external libraries in this implementation:
 * [clap][] for parsing the CLI arguments.
 * [comfy-table][] for generating ASCII-art tables.
 * [flate2][] for zlib decompression.
-* [rayon][] for multithreading (only for [rainbow-table][] features so far).
+* [rayon][] for multithreading.
 * [regex][] as regex engine.
 * [quick-xml][] and [serde][] for `.adr` files.
 * [log][] and [env_logger][] for logging.
+
+The `.nu` automation scripts are written in [nushell][].
 
 ## Legal stuff
 
@@ -180,3 +186,4 @@ Please be mindful of intellectual property rights and ensure that all usage comp
 [serde]: https://crates.io/crates/serde
 [log]: https://crates.io/crates/log
 [env_logger]: https://crates.io/crates/env_logger
+[hearthsim]: https://github.com/hearthsim
