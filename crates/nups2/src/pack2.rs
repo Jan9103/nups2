@@ -42,7 +42,7 @@ impl Pack2 {
             .assets
             .iter()
             .filter(|i| i.name.is_none())
-            .map(|i| i.name_hash.clone())
+            .map(|i| i.name_hash)
             .collect();
         let words: Vec<String> =
             crate::rainbow_table::search::search_table(rainbow_table_file, &hashes_to_crack)?;

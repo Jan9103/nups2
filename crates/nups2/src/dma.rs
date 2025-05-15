@@ -43,7 +43,7 @@ impl Dma {
         for _ in 1..=material_count {
             materials.push(DmaMaterial::read(br)?);
         }
-        debug::trace!("finished reading dma");
+        log::trace!("finished reading dma");
         Ok(Self { version, materials })
     }
 

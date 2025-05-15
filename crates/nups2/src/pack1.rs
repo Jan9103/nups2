@@ -1,8 +1,6 @@
 use flate2::bufread::ZlibDecoder;
 
-use crate::bin_utils::{
-    clone_big_x_bytes, read_big_x_bytes, read_u32_be, read_x_bytes, write_u32_be,
-};
+use crate::bin_utils::{clone_big_x_bytes, read_u32_be, read_x_bytes, write_u32_be};
 use crate::cli_utils::humanise_bytes;
 use std::fmt::Display;
 use std::io::prelude::Seek;
@@ -298,7 +296,7 @@ impl Pack1Asset {
     }
 
     fn header_length(&self) -> u32 {
-        16 + (self.name.as_bytes().len() as u32)
+        16 + (self.name.len() as u32)
     }
 
     // pub fn raw_bytes(&self, pack_file_stream: &mut File) -> std::io::Result<Vec<u8>> {
@@ -375,7 +373,8 @@ impl Pack1Asset {
                 "Can't convert a pack2 asset to a pack1 asset due to pack1 limitations (u32::MAX < u64::MAX)"
             );
         }
-        let res = Ok(Self {
+
+        Ok(Self {
             name,
             offset: p2a.offset as u32,
             data_length: if p2a.is_zipped {
@@ -385,8 +384,7 @@ impl Pack1Asset {
             },
             file_hash: p2a.data_hash, // i presume its the same?
             stream_is_pack2_zipped: p2a.is_zipped,
-        });
-        res
+        })
     }
 }
 

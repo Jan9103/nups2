@@ -1,5 +1,5 @@
-use crate::bin_utils::*;
 use crate::dma::Dma;
+use crate::{bin_utils::*, Nups2Error};
 use std::collections::HashMap;
 use std::io::Read;
 
@@ -9,27 +9,28 @@ pub type Matrix4x4 = (Vector4, Vector4, Vector4, Vector4);
 
 #[derive(Debug)]
 pub struct Dme {
-    bounding_box: (Vector3, Vector3),
-    dma: Dma,
-    meshes: Vec<DmeMesh>,
-    bone_draw_calls: Vec<DmeBoneDrawCall>,
-    internal_bone_map_entries: Vec<DmeBoneMapEntry>,
-    bones: Vec<DmeBone>,
+    pub bounding_box: (Vector3, Vector3),
+    pub dma: Dma,
+    pub meshes: Vec<DmeMesh>,
+    pub bone_draw_calls: Vec<DmeBoneDrawCall>,
+    pub internal_bone_map_entries: Vec<DmeBoneMapEntry>,
+    pub bones: Vec<DmeBone>,
 }
 
 impl Dme {
-    pub fn read(br: &mut dyn Read) -> std::io::Result<Self> {
+    pub fn read(br: &mut dyn Read) -> Result<Self, Nups2Error> {
         log::trace!("[Dme::read] start");
         let magic: u32 = read_u32_be(br)?;
-        assert_eq!(magic, 0x444d4f44, "DME file invalid (missing magick value)");
+        if magic != 0x444d4f44 {
+            return Err(Nups2Error::Other("DME: file missing magic value"));
+        }
         let version: u32 = read_u32_le(br)?;
-        assert_eq!(version, 4, "Unsupported DME version (only v4 is supported)");
         match version {
-            4 => Self::internal_read_v4(br),
-            _ => Err(std::io::Error::new(
-                std::io::ErrorKind::InvalidInput,
-                format!("Unsupported DME version ({})", version),
-            )),
+            4 => Ok(Self::internal_read_v4(br)?),
+            _ => Err(Nups2Error::OtherDyn(format!(
+                "Unsupported DME version ({})",
+                version
+            ))),
         }
     }
 
@@ -139,13 +140,13 @@ impl Dme {
 
 #[derive(Debug)]
 pub struct DmeMesh {
-    vertex_count: u32,
-    index_count: u32,
-    draw_call_offset: u32,
-    draw_call_count: u32,
-    bone_transformation_count: u32,
-    index_data: Vec<u8>,
-    vertex_streams: Vec<DmeVertexStream>,
+    pub vertex_count: u32,
+    pub index_count: u32,
+    pub draw_call_offset: u32,
+    pub draw_call_count: u32,
+    pub bone_transformation_count: u32,
+    pub index_data: Vec<u8>,
+    pub vertex_streams: Vec<DmeVertexStream>,
 }
 impl DmeMesh {
     pub fn read(br: &mut dyn Read) -> std::io::Result<Self> {
@@ -183,13 +184,13 @@ impl DmeMesh {
 
 #[derive(Debug)]
 pub struct DmeBoneDrawCall {
-    bone_start: u32,
-    bone_count: u32,
-    delta: u32,
-    vertex_offset: u32,
-    vertex_count: u32,
-    index_offset: u32,
-    index_count: u32,
+    pub bone_start: u32,
+    pub bone_count: u32,
+    pub delta: u32,
+    pub vertex_offset: u32,
+    pub vertex_count: u32,
+    pub index_offset: u32,
+    pub index_count: u32,
 }
 impl DmeBoneDrawCall {
     pub fn read(br: &mut dyn Read) -> std::io::Result<Self> {
@@ -232,17 +233,17 @@ impl DmeBoneMapEntry {
 
 #[derive(Debug)]
 pub struct DmeBone {
-    inverse_bind_pose: Matrix4x4,
-    min: Vector3,
-    max: Vector3,
-    name_hash: u32,
+    pub inverse_bind_pose: Matrix4x4,
+    pub min: Vector3,
+    pub max: Vector3,
+    pub name_hash: u32,
 }
 impl DmeBone {}
 
 #[derive(Debug)]
 pub struct DmeVertexStream {
-    bytes_per_vertex: u32,
-    data: Vec<u8>,
+    pub bytes_per_vertex: u32,
+    pub data: Vec<u8>,
 }
 impl DmeVertexStream {
     pub fn read(br: &mut dyn Read, vertex_count: u32) -> std::io::Result<Self> {

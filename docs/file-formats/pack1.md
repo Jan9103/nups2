@@ -24,4 +24,4 @@ Pack1 similar to a tar file contains multiple other files.
 * `$name_length` bytes: name bytes (utf-8?)
 * u32 BE: offset (from filestart) of where the actual data is located
 * u32 BE: data length in bytes
-* u32 BE: file hash (presumably crc?)
+* u32 BE: file hash (crc32)

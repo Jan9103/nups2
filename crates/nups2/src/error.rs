@@ -5,6 +5,7 @@ pub enum Nups2Error {
     IoError(std::io::Error),
     Utf8Error(std::string::FromUtf8Error),
     Other(&'static str),
+    OtherDyn(String),
 }
 
 impl Display for Nups2Error {
@@ -13,6 +14,7 @@ impl Display for Nups2Error {
             Nups2Error::IoError(error) => error.fmt(f),
             Nups2Error::Utf8Error(error) => error.fmt(f),
             Nups2Error::Other(m) => write!(f, "Error: {}", m),
+            Nups2Error::OtherDyn(m) => write!(f, "Error: {}", m),
         }
     }
 }
@@ -26,6 +28,12 @@ impl From<std::io::Error> for Nups2Error {
 impl From<&'static str> for Nups2Error {
     fn from(value: &'static str) -> Self {
         Self::Other(value)
+    }
+}
+
+impl From<String> for Nups2Error {
+    fn from(value: String) -> Self {
+        Self::OtherDyn(value)
     }
 }
 

@@ -4,7 +4,7 @@ pub mod search {
     use std::io::{BufRead, BufReader};
     use std::{io::Result, path::Path};
 
-    pub fn search_table(rainbow_table_file: &Path, hashes: &Vec<u64>) -> Result<Vec<String>> {
+    pub fn search_table(rainbow_table_file: &Path, hashes: &[u64]) -> Result<Vec<String>> {
         let file: File = File::open(rainbow_table_file)?;
         let br: BufReader<File> = BufReader::new(file);
 
@@ -50,7 +50,7 @@ pub mod build {
         let mut br: File = File::create_new(save_file)?;
         for word_count in 1..=max_words {
             recursive_loop_build(
-                &String::new(),
+                "",
                 rainbow_table_words,
                 file_extensions,
                 word_count,
@@ -62,7 +62,7 @@ pub mod build {
     }
 
     fn recursive_loop_build(
-        v: &String,
+        v: &str,
         rainbow_table_words: &Vec<String>,
         file_extensions: &Vec<String>,
         subloops: usize,
@@ -81,7 +81,7 @@ pub mod build {
     }
 
     fn recursive_loop_build_ext(
-        v: &String,
+        v: &str,
         file_extensions: &Vec<String>,
         br: &mut File,
     ) -> Result<()> {
@@ -94,7 +94,7 @@ pub mod build {
             })
             .collect::<Vec<String>>()
             .join("");
-        br.write(result.as_bytes())?;
+        br.write_all(result.as_bytes())?;
         Ok(())
     }
 
@@ -107,7 +107,7 @@ pub mod build {
         let mut br: File = File::create_new(save_file)?;
         for file_name in filenames_br.lines() {
             let file_name: String = file_name?;
-            br.write(
+            br.write_all(
                 format!("{} {}\n", crc64::convert_filename(&file_name), &file_name).as_bytes(),
             )?;
         }
