@@ -4,6 +4,7 @@ pub mod bin_utils;
 #[cfg(feature = "cli")]
 pub mod cli;
 pub mod cli_utils;
+pub mod crc32;
 pub mod crc64;
 #[cfg(feature = "dma")]
 pub mod dma;
