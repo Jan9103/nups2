@@ -4,12 +4,12 @@
 use std::collections::HashMap;
 
 pub fn hash(bytes: &[u8]) -> u64 {
-    let mut crc: u64 = 0xffffffffffffffff;
+    let mut crc: u64 = u64::MAX;
     for c in bytes {
         let tab_index = ((crc & 0xff) ^ (*c as u64)) & 0xff;
         crc = CRC_TABLE[tab_index as usize] ^ (crc >> 8);
     }
-    crc ^ 0xffffffffffffffff
+    crc ^ u64::MAX
 }
 
 /// additionally applies .to_uppercase
@@ -32,7 +32,7 @@ pub fn filename_list_to_lookup_table(filename_list: &[String]) -> HashMap<u64, S
     }
 }
 
-const CRC_TABLE: &[u64] = &[
+const CRC_TABLE: [u64; 256] = [
     0x0000000000000000,
     0x7ad870c830358979,
     0xf5b0e190606b12f2,

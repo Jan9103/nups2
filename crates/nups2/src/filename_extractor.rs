@@ -23,9 +23,9 @@ const FILENAME_REGEX_STRINGS: [&str; 5] = [
     r#"[A-Za-z0-9<>._-]+\.[a-zA-Z0-9]{2,5}"#,
     r#"[A-Za-z0-9<>._-]+\.[a-zA-Z0-9]{2,5}"#,
     // extensions, which might be present, but yield no results: cfx
-    r#"[A-Za-z0-9<>._-]+\.(adr|agr|ags|apb|apx|bat|bmp|bin|cdt|cnk0|cnk1|cnk2|cnk3|cnk4|cnk5|crc|crt|cso|cur|dat|db|dds|def|dir|dll|dma|dme|dmv|dsk|dx11efb|dx11rsb|dx11ssb|eco|efb|exe|fbx|fsb|fx|fxh|fxd|fxo|gr2|gfx|gnf|i64|ind|ini|jpg|lst|lua|mrn|nsa|pak|pem|playerstudio|png|prsb|psd|pssb|swf|tga|thm|tome|ttf|txt|vnfo|wav|xlsx|xmd|xml|xrsb|xssb|zone)"#,
-    r#"[A-Za-z0-9<>._-]+\.(?i)(adr|agr|ags|apb|apx|bat|bmp|bin|cdt|cnk0|cnk1|cnk2|cnk3|cnk4|cnk5|crc|crt|cso|cur|dat|db|dds|def|dir|dll|dma|dme|dmv|dsk|dx11efb|dx11rsb|dx11ssb|eco|efb|exe|fbx|fsb|fx|fxh|fxd|fxo|gr2|gfx|gnf|i64|ind|ini|jpg|lst|lua|mrn|nsa|pak|pem|playerstudio|png|prsb|psd|pssb|swf|tga|thm|tome|ttf|txt|vnfo|wav|xlsx|xmd|xml|xrsb|xssb|zone)"#,
-    r#"[A-Za-z0-9<>._-]+\.(?i)(adr|agr|ags|apb|apx|bat|bmp|bin|cdt|cnk0|cnk1|cnk2|cnk3|cnk4|cnk5|crc|crt|cso|cur|dat|db|dds|def|dir|dll|dma|dme|dmv|dsk|dx11efb|dx11rsb|dx11ssb|eco|efb|exe|fbx|fsb|fx|fxh|fxd|fxo|gr2|gfx|gnf|i64|ind|ini|jpg|lst|lua|mrn|nsa|pak|pem|playerstudio|png|prsb|psd|pssb|swf|tga|thm|tome|ttf|txt|vnfo|wav|xlsx|xmd|xml|xrsb|xssb|zone)"#,
+    r#"[A-Za-z0-9<>._-]+\.(adr|agr|ags|apb|apx|bat|bmp|bin|cdt|cnk[0-9]?|crc|crt|cso|cur|dat|db|dds|def|dir|dll|dm[aev]|dsk|dx11efb|dx11rsb|dx11ssb|eco|efb|exe|fbx|fsb|fx|fxh|fxd|fxo|gr2|gfx|gnf|i64|ind|ini|jpg|lst|lua|mrn|nsa|pak|pem|playerstudio|png|prsb|psd|pssb|swf|tga|thm|tome|ttf|txt|vnfo|wav|xlsx|xmd|xml|xrsb|xssb|zone)"#,
+    r#"[A-Za-z0-9<>._-]+\.(?i)(adr|agr|ags|apb|apx|bat|bmp|bin|cdt|cnk[0-9]?|crc|crt|cso|cur|dat|db|dds|def|dir|dll|dm[aev]|dsk|dx11efb|dx11rsb|dx11ssb|eco|efb|exe|fbx|fsb|fx|fxh|fxd|fxo|gr2|gfx|gnf|i64|ind|ini|jpg|lst|lua|mrn|nsa|pak|pem|playerstudio|png|prsb|psd|pssb|swf|tga|thm|tome|ttf|txt|vnfo|wav|xlsx|xmd|xml|xrsb|xssb|zone)"#,
+    r#"[A-Za-z0-9<>._-]+\.(?i)(adr|agr|ags|apb|apx|bat|bmp|bin|cdt|cnk[0-9]?|crc|crt|cso|cur|dat|db|dds|def|dir|dll|dm[aev]|dsk|dx11efb|dx11rsb|dx11ssb|eco|efb|exe|fbx|fsb|fx|fxh|fxd|fxo|gr2|gfx|gnf|i64|ind|ini|jpg|lst|lua|mrn|nsa|pak|pem|playerstudio|png|prsb|psd|pssb|swf|tga|thm|tome|ttf|txt|vnfo|wav|xlsx|xmd|xml|xrsb|xssb|zone)"#,
 ];
 
 /// search_mode:
@@ -124,8 +124,8 @@ pub fn extract_names(
 
     if search_mode == 1 {
         // remove floats (example: 1.234)
-        let float_regex: Regex =
-            Regex::new("^[0-9.]+$").expect("Failed to compile filename_extractor float_regex");
+        let float_regex: Regex = Regex::new(r#"^[0-9]*\.[0-9]*$"#)
+            .expect("Failed to compile filename_extractor float_regex");
         output.retain(|i| !float_regex.is_match(i.as_str()));
     }
 
@@ -154,4 +154,16 @@ fn find_text_patches(binary: &Vec<u8>) -> Vec<String> {
         output.push(buffer);
     }
     output
+}
+
+#[cfg(debug_assertions)]
+mod tests {
+    #[test]
+    fn test_regexes() {
+        use super::Regex;
+
+        for regex_pattern in super::FILENAME_REGEX_STRINGS {
+            Regex::new(regex_pattern).unwrap();
+        }
+    }
 }

@@ -233,6 +233,7 @@ impl Pack2 {
         for asset in self.assets.iter() {
             if asset.name.clone().unwrap_or("".into()) == file_to_extract
                 || format!("0x{:X}", asset.name_hash) == file_to_extract
+                || format!("{}", asset.name_hash) == file_to_extract
             {
                 let mut fos: File = File::create_new(output_directory.join(file_to_extract))?;
                 asset.extract_to_file(br, &mut fos)?;
