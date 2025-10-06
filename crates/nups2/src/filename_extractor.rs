@@ -28,6 +28,8 @@ const FILENAME_REGEX_STRINGS: [&str; 5] = [
     r#"[A-Za-z0-9<>._-]+\.(?i)(adr|agr|ags|apb|apx|bat|bmp|bin|cdt|cnk[0-9]?|crc|crt|cso|cur|dat|db|dds|def|dir|dll|dm[aev]|dsk|dx11efb|dx11rsb|dx11ssb|eco|efb|exe|fbx|fsb|fx|fxh|fxd|fxo|gr2|gfx|gnf|i64|ind|ini|jpg|lst|lua|mrn|nsa|pak|pem|playerstudio|png|prsb|psd|pssb|swf|tga|thm|tome|ttf|txt|vnfo|wav|xlsx|xmd|xml|xrsb|xssb|zone)"#,
 ];
 
+const CONTINENTS: &[&str] = &["Amerish", "Esamir", "Hossin", "Indar", "Oshur"];
+
 /// search_mode:
 ///   0: short-regex, all-files => many false positives
 ///   1: short-regex + anti-float, file-filter => many false positives
@@ -127,6 +129,16 @@ pub fn extract_names(
         let float_regex: Regex = Regex::new(r#"^[0-9]*\.[0-9]*$"#)
             .expect("Failed to compile filename_extractor float_regex");
         output.retain(|i| !float_regex.is_match(i.as_str()));
+    }
+
+    for continent in CONTINENTS.iter() {
+        for cnk in 0..=5 {
+            for c1 in (-64..=60).step_by(4) {
+                for c2 in (-64..=60).step_by(4) {
+                    output.push(format!("{continent}_{c1}_{c2}.cnk{cnk}"))
+                }
+            }
+        }
     }
 
     Ok(output
