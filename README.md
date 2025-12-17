@@ -20,7 +20,7 @@ filename-scraper finds diffrent results.
     * json
   * extract files
   * scrape filenames
-  * manifests (for `diff` between updates, etc)
+  * manifests (for `diff` between updates, etc; you can find a public archive [here](https://github.com/Jan9103/nups2/issues/5))
 * `pack1`:
   * list contents
   * extract files
